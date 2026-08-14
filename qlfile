@@ -17,6 +17,6 @@ github shamazmazum/lmdb
 github shamazmazum/entzauberte-matrices :tag v0.3
 github conspack/cl-conspack
 github shamazmazum/command-line-parse
-github shamazmazum/numpy-npy
 github shamazmazum/vector-sum
 github shamazmazum/cl-libtiff :tag v0.1
+github shamazmazum/numpy-npy :tag v0.4
