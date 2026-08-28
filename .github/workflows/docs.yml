@@ -59,9 +59,9 @@ jobs:
           export GIT_SSL_NO_VERIFY=1
           export LD_LIBRARY_PATH=/usr/local/lib
           qlot install
-          qlot exec ros -s codex -e '(codex:document :soil-align)'
+          qlot exec ros -s codex -e '(codex:document :pore-align)'
       - name: Deploy to GH pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: docs/build/soil-align/html
+          publish_dir: docs/build/pore-align/html

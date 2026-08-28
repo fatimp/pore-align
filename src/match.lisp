@@ -1,9 +1,9 @@
-(defpackage soil-align/match
+(defpackage pore-align/match
   (:use #:cl)
-  (:local-nicknames (#:util #:soil-align/util)
+  (:local-nicknames (#:util #:pore-align/util)
                     (#:ff   #:float-features))
   (:export #:match-descriptors))
-(in-package :soil-align/match)
+(in-package :pore-align/match)
 
 (cffi:define-foreign-library faiss
   (:unix  (:or "libfaiss_c.so"))

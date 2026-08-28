@@ -1,9 +1,9 @@
-(defpackage soil-align/array-transform
+(defpackage pore-align/array-transform
   (:use #:cl)
-  (:local-nicknames (#:util #:soil-align/util)
-                    (#:tran #:soil-align/transform))
+  (:local-nicknames (#:util #:pore-align/util)
+                    (#:tran #:pore-align/transform))
   (:export #:apply-transform))
-(in-package :soil-align/array-transform)
+(in-package :pore-align/array-transform)
 
 (serapeum:-> apply-transform-xs
              (tran:affine-transform single-float single-float single-float)

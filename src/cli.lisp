@@ -1,20 +1,20 @@
-(defpackage soil-align/cli
+(defpackage pore-align/cli
   (:use #:cl #:command-line-parse #:parse-float)
-  (:local-nicknames (#:match  #:soil-align/match)
-                    (#:util   #:soil-align/util)
-                    (#:sift3d #:soil-align/sift3d)
-                    (#:db     #:soil-align/db)
-                    (#:io     #:soil-align/io)
-                    (#:pca    #:soil-align/pca)
-                    (#:trans  #:soil-align/transform)
-                    (#:atrans #:soil-align/array-transform)
+  (:local-nicknames (#:match  #:pore-align/match)
+                    (#:util   #:pore-align/util)
+                    (#:sift3d #:pore-align/sift3d)
+                    (#:db     #:pore-align/db)
+                    (#:io     #:pore-align/io)
+                    (#:pca    #:pore-align/pca)
+                    (#:trans  #:pore-align/transform)
+                    (#:atrans #:pore-align/array-transform)
                     (#:em     #:entzauberte-matrices))
   (:export #:main))
-(in-package :soil-align/cli)
+(in-package :pore-align/cli)
 
 (alexandria:define-constant +db-pathname+
     #+unix
-    #p"~/.local/share/soil-align/"
+    #p"~/.local/share/pore-align/"
     #-unix
     (error "I don't know a suitable location where I can store the database.")
   :documentation "Path where the cache is stored"
@@ -22,7 +22,7 @@
 
 (alexandria:define-constant +log-pathname+
     #+unix
-    #p"~/.local/share/soil-align/log"
+    #p"~/.local/share/pore-align/log"
     #-unix
     (error "I don't know a suitable location where I can store the log file.")
   :documentation "Path where the log is stored"
@@ -270,7 +270,7 @@
      (uiop:quit 0))
     ((or cmd-line-parse-error
          (and util:generic-error (not util:internal-error)))
-     (print-usage *parser* "soil-align")
+     (print-usage *parser* "pore-align")
      (uiop:quit 1))
     (error
      (sb-debug:backtrace 20 *error-output*)

@@ -1,11 +1,11 @@
-(defpackage soil-align/db
+(defpackage pore-align/db
   (:use #:cl)
-  (:local-nicknames (#:util   #:soil-align/util)
-                    (#:pca    #:soil-align/pca)
-                    (#:pre    #:soil-align/preprocessing)
-                    (#:sift3d #:soil-align/sift3d))
+  (:local-nicknames (#:util   #:pore-align/util)
+                    (#:pca    #:pore-align/pca)
+                    (#:pre    #:pore-align/preprocessing)
+                    (#:sift3d #:pore-align/sift3d))
   (:export #:descriptors-cached))
-(in-package :soil-align/db)
+(in-package :pore-align/db)
 
 (serapeum:-> image-hash ((util:image (unsigned-byte 8)))
              (values (simple-array (unsigned-byte 8) (32)) &optional))

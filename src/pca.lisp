@@ -1,12 +1,12 @@
-(defpackage soil-align/pca
+(defpackage pore-align/pca
   (:use #:cl)
-  (:local-nicknames (#:util #:soil-align/util)
+  (:local-nicknames (#:util #:pore-align/util)
                     (#:em   #:entzauberte-matrices))
   (:export #:fit-pca
            #:transform-pca
            #:invert-pca
            #:restore-descriptors))
-(in-package :soil-align/pca)
+(in-package :pore-align/pca)
 
 (serapeum:-> means ((util:fixed-entries #.util:+descriptor-length+))
              (values (simple-array single-float (#.util:+descriptor-length+))

@@ -1,4 +1,4 @@
-(defpackage soil-align/util
+(defpackage pore-align/util
   (:use #:cl)
   (:export #:loop-array
            #:loop-ranges
@@ -18,7 +18,7 @@
            #:db-error
            #:user-input-error
            #:io-error))
-(in-package :soil-align/util)
+(in-package :pore-align/util)
 
 (defconstant +descriptor-offset+ 3)
 (defconstant +descriptor-length+ (- 771 +descriptor-offset+))
@@ -147,7 +147,7 @@
 (define-condition generic-error (error)
   ((message :reader  error-message
             :initarg :message))
-  (:documentation "Generic error which is explicitly signaled from soil-align"))
+  (:documentation "Generic error which is explicitly signaled from pore-align"))
 
 (define-condition internal-error (generic-error)
   ()

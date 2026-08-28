@@ -1,6 +1,6 @@
-(in-package :soil-align/tests)
+(in-package :pore-align/tests)
 
-(def-suite stuff :description "Different aspects of soil-align")
+(def-suite stuff :description "Different aspects of pore-align")
 
 (defun run-tests ()
   (let ((lparallel:*kernel* (lparallel:make-kernel 4)))

@@ -51,12 +51,12 @@ jobs:
       - name: Set Path
         run: |
           echo "${HOME}/.roswell/bin" >> $GITHUB_PATH
-      - name: Build soil-align
+      - name: Build pore-align
         run: |
           cd $GITHUB_WORKSPACE
           export LD_LIBRARY_PATH=/usr/local/lib
           qlot install
-          qlot exec ros dynamic-space-size=100gb -e '(asdf:make :soil-align)'
+          qlot exec ros dynamic-space-size=100gb -e '(asdf:make :pore-align)'
       - name: Get version
         uses: nowsprinting/check-version-format-action@v5
         id: version
@@ -65,14 +65,14 @@ jobs:
       - name: Prepare release
         run: |
           cd $GITHUB_WORKSPACE
-          mkdir -p soil-align-amd64/usr/bin \
-          soil-align-amd64/usr/lib/x86_64-linux-gnu \
-          soil-align-amd64/DEBIAN
-          cp src/soil-align soil-align-amd64/usr/bin
-          cp /usr/local/lib/libfaiss*  soil-align-amd64/usr/lib/x86_64-linux-gnu
-          cp /usr/local/lib/libsift3D* soil-align-amd64/usr/lib/x86_64-linux-gnu
-          cat > soil-align-amd64/DEBIAN/control << EOF
-          Package: soil-align
+          mkdir -p pore-align-amd64/usr/bin \
+          pore-align-amd64/usr/lib/x86_64-linux-gnu \
+          pore-align-amd64/DEBIAN
+          cp src/pore-align pore-align-amd64/usr/bin
+          cp /usr/local/lib/libfaiss*  pore-align-amd64/usr/lib/x86_64-linux-gnu
+          cp /usr/local/lib/libsift3D* pore-align-amd64/usr/lib/x86_64-linux-gnu
+          cat > pore-align-amd64/DEBIAN/control << EOF
+          Package: pore-align
           Version: ${{ steps.version.outputs.full_without_prefix }}
           Architecture: amd64
           Maintainer: Vasily Postnicov <postnicov.vv@mipt.ru>
@@ -80,10 +80,10 @@ jobs:
           Conflicts: libfaiss, libfaiss-dev
           Description: A tool for 3D image registration
           EOF
-          cat soil-align-amd64/DEBIAN/control
-          dpkg-deb --build soil-align-amd64 \
-          soil-align-amd64-${{ steps.version.outputs.full_without_prefix }}.deb
+          cat pore-align-amd64/DEBIAN/control
+          dpkg-deb --build pore-align-amd64 \
+          pore-align-amd64-${{ steps.version.outputs.full_without_prefix }}.deb
       - name: Make a Release
         uses: softprops/action-gh-release@v3
         with:
-          files: soil-align-amd64-${{ steps.version.outputs.full_without_prefix }}.deb
+          files: pore-align-amd64-${{ steps.version.outputs.full_without_prefix }}.deb

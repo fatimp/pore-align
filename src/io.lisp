@@ -1,10 +1,10 @@
-(defpackage soil-align/io
+(defpackage pore-align/io
   (:use #:cl)
-  (:local-nicknames (#:util #:soil-align/util)
+  (:local-nicknames (#:util #:pore-align/util)
                     (#:tiff #:cl-libtiff))
   (:export #:read-image
            #:write-image))
-(in-package :soil-align/io)
+(in-package :pore-align/io)
 
 ;; Raw "format" (a big mispractice of our NII)
 (serapeum:-> read-raw (pathname)

@@ -3,11 +3,11 @@
 ;; Image Processing, vol. 26, no. 10, pp. 4900-4910, Oct. 2017. doi:
 ;; 10.1109/TIP.2017.2722689
 
-(defpackage soil-align/sift3d
+(defpackage pore-align/sift3d
   (:use #:cl)
-  (:local-nicknames (#:util #:soil-align/util))
+  (:local-nicknames (#:util #:pore-align/util))
   (:export #:descriptors))
-(in-package :soil-align/sift3d)
+(in-package :pore-align/sift3d)
 
 ;; Libraries
 (cffi:define-foreign-library libsift3d

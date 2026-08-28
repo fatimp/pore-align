@@ -1,11 +1,11 @@
-(defpackage soil-align/preprocessing
+(defpackage pore-align/preprocessing
   (:use #:cl)
-  (:local-nicknames (#:util #:soil-align/util))
+  (:local-nicknames (#:util #:pore-align/util))
   (:export #:image
            #:histogram
            #:bin-dimensions
            #:clahe))
-(in-package :soil-align/preprocessing)
+(in-package :pore-align/preprocessing)
 
 (serapeum:defconstructor bin-dimensions
  (h alexandria:positive-fixnum)

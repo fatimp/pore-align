@@ -1,8 +1,8 @@
-(defpackage soil-align/transform
+(defpackage pore-align/transform
   (:use #:cl)
   (:local-nicknames (#:ff   #:float-features)
                     (#:em   #:entzauberte-matrices)
-                    (#:util #:soil-align/util))
+                    (#:util #:pore-align/util))
   (:export #:rigid-transform-fit
            #:ransac
            #:ransac-result
@@ -13,7 +13,7 @@
            #:affine-rotation
            #:affine-translation
            #:affine-uniform-scaling))
-(in-package :soil-align/transform)
+(in-package :pore-align/transform)
 
 (deftype coordinate       () '(simple-array single-float (3)))
 (deftype affine-transform () '(simple-array single-float (4 4)))

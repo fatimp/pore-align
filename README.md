@@ -1,7 +1,7 @@
-# soil-align
-[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://fatimp.github.io/soil-align)
+# pore-align
+[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://fatimp.github.io/pore-align)
 
-**Soil-align** is a program for registration of 3D images of porous media
+**Pore-align** is a program for registration of 3D images of porous media
 (e.g. soil, hence the name).
 
 Registration is the process of bringing different images (e.g. taken from
@@ -36,7 +36,7 @@ $ qlot exec sbcl --dynamic-space-size 100gb
 and execute the following command in the opened REPL:
 
 ``` lisp
-(asdf:make :soil-align)
+(asdf:make :pore-align)
 ```
 
 The binary executable will be located in `src`.
@@ -48,5 +48,5 @@ from the REPL:
 
 ``` lisp
 (asdf:load-system :codex)
-(codex:document :soil-align)
+(codex:document :pore-align)
 ```
