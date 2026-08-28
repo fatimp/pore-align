@@ -1,5 +1,15 @@
 # Changelog
 
+## Version 0.11.1
+
+* Incompatible change: LMDB 1.0 is now required.
+* Incompatible change: `soil-align` was renamed to `pore-align` (a stange
+  decision).
+* Improvement: Two new parameters `--ref-workspace-side` and
+  `--src-workspace-side` to control workspace sides for source and reference
+  images independently. The old option `--workspace-side` is still there but has
+  lower priority.
+
 ## Version 0.11.0
 
 * Improvement: Add support for multipage TIFF images (can be used for input and
