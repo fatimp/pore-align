@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>
-  Introduction &ndash; soil-align
+  Introduction &ndash; pore-align
 </title>
     <link rel="stylesheet" href="static/style.css"/>
     
@@ -39,7 +39,7 @@
   </head>
   <body>
     
-  <h1 class="doc-title">soil-align</h1>
+  <h1 class="doc-title">pore-align</h1>
   <article id="article" data-section="index">
     <aside>
       <ol class="toc"><li><a href="index.html" data-node="index">Introduction</a><ol><li><a href="index.html#source-code-and-binary-packages" data-node="source-code-and-binary-packages">Source code and binary packages</a></li><li><a href="index.html#dependencies" data-node="dependencies">Dependencies</a></li><li><a href="index.html#installation" data-node="installation">Installation</a></li><li><a href="index.html#literature" data-node="literature">Literature</a></li></ol></li><li><a href="cli.html" data-node="cli">Command line tool</a><ol><li><a href="how-to-use.html" data-node="how-to-use">How to use</a></li><li><a href="output-explained.html" data-node="output-explained">Output explained</a></li><li><a href="supported-formats.html" data-node="supported-formats">Supported formats</a></li></ol></li><li><a href="api.html" data-node="api">API</a></li></ol>
@@ -50,7 +50,7 @@
       </header>
       <div class="content">
         <p>
-   <code>soil-align</code> is an application for registration of 3D images of porous
+   <code>pore-align</code> is an application for registration of 3D images of porous
    media. It's based on computing affine transform and gamma correction
    invariant feature points (using the SIFT algorithm modified for 3D),
    matching them on two images (one of which called &quot;source&quot; and another
@@ -62,14 +62,14 @@
    <img src="example.png"/></p><p>   </p><h1 id="source-code-and-binary-packages">Source code and binary packages</h1>
      There is two options for obtaining the source code:
      <ul><li>Download a release from
-     <a href="https://github.com/fatimp/soil-align/releases">GitHub</a>. There
-     is also an experimental binary package for Ubuntu LTS.</li><li>Clone git repository: <code>git clone https://github.com/fatimp/soil-align</code>.</li></ul>
+     <a href="https://github.com/fatimp/pore-align/releases">GitHub</a>. There
+     is also an experimental binary package for Ubuntu LTS.</li><li>Clone git repository: <code>git clone https://github.com/fatimp/pore-align</code>.</li></ul>
      Changelog is
-     <a href="https://github.com/fatimp/soil-align/blob/master/CHANGELOG.md">here</a>.
+     <a href="https://github.com/fatimp/pore-align/blob/master/CHANGELOG.md">here</a>.
    <p>   </p><h1 id="dependencies">Dependencies</h1>
      <ul><li><a href="https://github.com/fatimp/SIFT3D">SIFT3D</a> version 2.0+</li><li>faiss (принадлежит компании Meta, признанной в РФ экстремистской организацией)</li><li>SBCL (Another implementation of Common Lisp will not do)</li><li>OpenBLAS</li><li>libtiff</li><li>LMDB</li><li><a href="https://github.com/fukamachi/qlot">Qlot</a> and SBCL for building</li></ul>
    <p>   </p><h1 id="installation">Installation</h1>
-     <ol><li>Launch a shell and <code>cd</code> to the root directory of this project.</li><li>Execute <code>qlot install &amp;&amp; qlot exec sbcl --dynamic-space-size 100gb</code></li><li>In the opened shell execute <code>(asdf:make :soil-align)</code>.</li><li>Your executable file is <code>src/soil-align</code>.</li></ol>
+     <ol><li>Launch a shell and <code>cd</code> to the root directory of this project.</li><li>Execute <code>qlot install &amp;&amp; qlot exec sbcl --dynamic-space-size 100gb</code></li><li>In the opened shell execute <code>(asdf:make :pore-align)</code>.</li><li>Your executable file is <code>src/pore-align</code>.</li></ol>
    <p>   </p><h1 id="literature">Literature</h1>
      <ul><li>B. Rister, M. A. Horowitz and D. L. Rubin, &quot;Volumetric Image
      Registration From Invariant Keypoints,&quot; in IEEE Transactions on Image

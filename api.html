@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>
-  API &ndash; soil-align
+  API &ndash; pore-align
 </title>
     <link rel="stylesheet" href="static/style.css"/>
     
@@ -39,7 +39,7 @@
   </head>
   <body>
     
-  <h1 class="doc-title">soil-align</h1>
+  <h1 class="doc-title">pore-align</h1>
   <article id="article" data-section="api">
     <aside>
       <ol class="toc"><li><a href="index.html" data-node="index">Introduction</a><ol><li><a href="index.html#source-code-and-binary-packages" data-node="source-code-and-binary-packages">Source code and binary packages</a></li><li><a href="index.html#dependencies" data-node="dependencies">Dependencies</a></li><li><a href="index.html#installation" data-node="installation">Installation</a></li><li><a href="index.html#literature" data-node="literature">Literature</a></li></ol></li><li><a href="cli.html" data-node="cli">Command line tool</a><ol><li><a href="cli.html#how-to-use" data-node="how-to-use">How to use</a></li><li><a href="cli.html#output-explained" data-node="output-explained">Output explained</a></li><li><a href="cli.html#supported-formats" data-node="supported-formats">Supported formats</a></li></ol></li><li><a href="api.html" data-node="api">API</a></li></ol>
@@ -50,16 +50,16 @@
       </header>
       <div class="content">
         <p>
-  Package <code>soil-align/preprocessing</code>:
+  Package <code>pore-align/preprocessing</code>:
   
     <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">clahe</code><code class="codex-lambda-list">(image &amp;key (bin-dimensions (default-bin-dimensions image)) (clip-limit 0.015))</code><div class="codex-docstring">Perform contrast limited adaptive histogram equalization (constrast
 enhancement) of an image. The parameter <code>BIN-DIMENSIONS</code> controls
 dimensions of a single histogram.</div></div>
-  </p><p>  Package <code>soil-align/sift3d</code>:
+  </p><p>  Package <code>pore-align/sift3d</code>:
   
     <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">descriptors</code><code class="codex-lambda-list">(array)</code><div class="codex-docstring">Take an image (3D array of single-floats) and return an array of
 keypoint coordinates and their descriptors.</div></div>
-  </p><p>  Package <code>soil-align/pca</code>:
+  </p><p>  Package <code>pore-align/pca</code>:
   
     <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">fit-pca</code><code class="codex-lambda-list">(descriptors explained-variance)</code><div class="codex-docstring">Return a matrix which projects vectors from the descriptor space to
 a PCA space of lesser dimensionality. The parameter
@@ -68,7 +68,7 @@ a PCA space of lesser dimensionality. The parameter
 <code>MEANS</code> are obtained from <code>FIT-PCA</code>.</div></div>
     <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">invert-pca</code><code class="codex-lambda-list">(pca vt means)</code><div class="codex-docstring">This is a (lossy) inversion of <code>TRANSFORM-PCA</code>, i.e. it converts
 vectors in the PCA space back into the descriptor space.</div></div>
-  </p><p>  Package <code>soil-align/db</code>:
+  </p><p>  Package <code>pore-align/db</code>:
   
     <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">descriptors-cached</code><code class="codex-lambda-list">(array db-pathname)</code><div class="codex-docstring"><p>Calculate image descriptors using 3D SIFT and cache them in a
 database. The next time the descriptors are calculated for this
@@ -80,13 +80,13 @@ single floats using CLAHE algorithm. <code>DB-PATHNAME</code> argument is a
 path to the database.</p><p>Return four values: Coordinates of keypoints, descriptors in the PCA
 space, a transform from the descriptor space to the PCA space,
 descriptor component means.</p></div></div>
-  </p><p>  Package <code>soil-align/match</code>:
+  </p><p>  Package <code>pore-align/match</code>:
   
     <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">match-descriptors</code><code class="codex-lambda-list">(c1 c2 d1 d2 &amp;optional (c 1.2))</code><div class="codex-docstring">Find matches between two sets of descriptors. The parameter <code>C</code>
 controls what we treat as a match. Bigger values result in a lesser
 number of more stable matches. \(C_i\) is an array of keypoint
 coordinates and \(D_i\) is an array of corresponding descriptors.</div></div>
-  </p><p>  Package <code>soil-align/transform</code>:
+  </p><p>  Package <code>pore-align/transform</code>:
   
     <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">rigid-transform-fit</code><code class="codex-lambda-list">(&amp;optional scalingp rotation-constraint)</code><div class="codex-docstring">Return a function which finds a rigid transform which fits the
 matches. The parameter <code>rotation-constraint</code> controls what rotations
@@ -102,7 +102,7 @@ fit. A point is well-fit if \(\| y - Ax \|\) is less than <code>ERR</code>,
 (\(A\) is a candidate for the found fit). The function <code>F</code> fits a
 subset of <code>MATCHES</code> and controls the type of transform (e.g. rigid,
 translation, etc.).</div></div>
-  </p><p>  Package <code>soil-align/array-transform</code>:
+  </p><p>  Package <code>pore-align/array-transform</code>:
   
     <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">apply-transform</code><code class="codex-lambda-list">(array m shape &amp;key (background 0))</code><div class="codex-docstring">Apply affine transform <code>M</code>(in the form of 4x4 matrix) to an
 image. The result has the shape <code>shape</code>.</div></div>

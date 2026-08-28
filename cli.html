@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>
-  Command line tool &ndash; soil-align
+  Command line tool &ndash; pore-align
 </title>
     <link rel="stylesheet" href="static/style.css"/>
     
@@ -39,7 +39,7 @@
   </head>
   <body>
     
-  <h1 class="doc-title">soil-align</h1>
+  <h1 class="doc-title">pore-align</h1>
   <article id="article" data-section="cli">
     <aside>
       <ol class="toc"><li><a href="index.html" data-node="index">Introduction</a><ol><li><a href="index.html#source-code-and-binary-packages" data-node="source-code-and-binary-packages">Source code and binary packages</a></li><li><a href="index.html#dependencies" data-node="dependencies">Dependencies</a></li><li><a href="index.html#installation" data-node="installation">Installation</a></li><li><a href="index.html#literature" data-node="literature">Literature</a></li></ol></li><li><a href="cli.html" data-node="cli">Command line tool</a><ol><li><a href="cli.html#how-to-use" data-node="how-to-use">How to use</a></li><li><a href="cli.html#output-explained" data-node="output-explained">Output explained</a></li><li><a href="cli.html#supported-formats" data-node="supported-formats">Supported formats</a></li></ol></li><li><a href="api.html" data-node="api">API</a></li></ol>
@@ -51,11 +51,11 @@
       <div class="content">
         <p>
    </p><h1 id="how-to-use">How to use</h1><p>
-   Soil-align application has a command line interface. If you launch it without
+   pore-align application has a command line interface. If you launch it without
    arguments the following short help appears:
-</p><pre><code class=NIL>% soil-align
+</p><pre><code class=NIL>% pore-align
 Abrupt ending of the input: argument #&lt;ARGUMENT {11004A6423}&gt; missing
-Usage: soil-align [-v|--verbose] [-t|--threads N] [-w|--workspace-side S]
+Usage: pore-align [-v|--verbose] [-t|--threads N] [-w|--workspace-side S]
                   [-O|--transform-output m.npy] [-o|--output out.npy]
                   [--rotation-constraint AXIS] [-s|--scaling]
                   [-b|--background-color COLOR] [--dist-ratio C]
@@ -75,7 +75,7 @@ Description of flags and options
 -t|--threads N                  Number of threads to use
 -v|--verbose                    Be verbose
 </code></pre><p>   Two mandatory arguments <code>reference</code> and <code>source</code> are two input
-   images. Soil-align will try to bring a source image into a reference'
+   images. pore-align will try to bring a source image into a reference'
    coordinate system and write a result image (if <code>-o</code> option is specified)
    and/or write a transform matrix (if <code>-O</code> option is specified). The
    transform matrix is 4×4 matrix in Numpy format which when left-multiplied by
@@ -103,55 +103,55 @@ Description of flags and options
    second-nearest feature point and \(d\) is the distance ratio. The default
    value is 1.2</li><li><code>--fit-error</code> — A parameter used in the RANSAC algorithm to
    determine if a model fits a point. The default value is 100.0</li><li><code>--ransac-iterations</code> — A number of RANSAC iterations to find a
-   model which fits the feature points. The default value is 5000.</li></ul><p>   Soil-align utilises LMDB to store image descriptors. The DB is written at
-   <code>~/.local/share/soil-align/</code> by default, but the path can be overwritten
+   model which fits the feature points. The default value is 5000.</li></ul><p>   pore-align utilises LMDB to store image descriptors. The DB is written at
+   <code>~/.local/share/pore-align/</code> by default, but the path can be overwritten
    with <code>SOIL_ALIGN_DB</code> environment variable. The DB accelerates registration
    within the same dataset. After working with the dataset it's recommended to
    manually remove the database. No DB pruning or what else to reduce the DB
    size is implemented at the moment.
    </p><p>   </p><h1 id="output-explained">Output explained</h1><p>
-   A typical output of soil-align when being run with <code>-v</code> option is the
+   A typical output of pore-align when being run with <code>-v</code> option is the
    following:
-</p><pre><code class=NIL> &lt;INFO&gt; [15:01:00] soil-align/cli cli.lisp (top level form %main) - Starting
- &lt;INFO&gt; [15:01:00] soil-align/cli cli.lisp (top level form %main) -
+</p><pre><code class=NIL> &lt;INFO&gt; [15:01:00] pore-align/cli cli.lisp (top level form %main) - Starting
+ &lt;INFO&gt; [15:01:00] pore-align/cli cli.lisp (top level form %main) -
   Will use 6 threads
- &lt;INFO&gt; [15:17:13] soil-align/cli cli.lisp (top level form %main log-eval) -
+ &lt;INFO&gt; [15:17:13] pore-align/cli cli.lisp (top level form %main log-eval) -
   SOIL-ALIGN/CLI::MESSAGE: &quot;Got descriptors of the source image&quot;
- &lt;INFO&gt; [15:34:03] soil-align/cli cli.lisp (top level form %main log-eval) -
+ &lt;INFO&gt; [15:34:03] pore-align/cli cli.lisp (top level form %main log-eval) -
   SOIL-ALIGN/CLI::MESSAGE: &quot;Got descriptors of the reference image&quot;
- &lt;INFO&gt; [15:36:00] soil-align/cli cli.lisp (top level form %main) -
+ &lt;INFO&gt; [15:36:00] pore-align/cli cli.lisp (top level form %main) -
   Found matches between images
- &lt;INFO&gt; [15:36:00] soil-align/cli cli.lisp (top level form %main) -
+ &lt;INFO&gt; [15:36:00] pore-align/cli cli.lisp (top level form %main) -
   Found a transform matrix
- &lt;INFO&gt; [15:36:12] soil-align/cli cli.lisp (top level form %main log-eval) -
+ &lt;INFO&gt; [15:36:12] pore-align/cli cli.lisp (top level form %main log-eval) -
   SOIL-ALIGN/CLI::MESSAGE: &quot;Computed a transformed image&quot;
- &lt;INFO&gt; [15:36:12] soil-align/cli cli.lisp (top level form %main) -
+ &lt;INFO&gt; [15:36:12] pore-align/cli cli.lisp (top level form %main) -
   Summary: 281390/300000 descriptors, 379 independent parameters, 996 matches, 842 inliers, 805.0559 fit error
 </code></pre><p>   As you can see it took 35 minutes to process a pair of images. In this
    example a workspace size of 800 were used. Each image contains about 300000
    feature points but there are only 996 matches between images. This is because
    there was a process of drying between the images which changed the structure
-   of the porous medium. Nevertheless soil-align was able to register the
+   of the porous medium. Nevertheless pore-align was able to register the
    images. It constructed a transform which fitted 842 descriptors with total
    error of 805 (the error is computed as \(\sqrt{\sum_i |T(x_i) - y_i|^2}\))
    where \(x_i\) is a coordinate of a feature point on the source image, \(y_i\)
    is a coordinate of a feature point on the reference image and \(T\) is a
-   transform between source and reference coordinate systems.</p><p>   If you run soil-align again with the same reference image, the execution time
+   transform between source and reference coordinate systems.</p><p>   If you run pore-align again with the same reference image, the execution time
    is reduced to 17 minutes due to use of LMDB.
-</p><pre><code class=NIL> &lt;INFO&gt; [15:59:34] soil-align/cli cli.lisp (top level form %main) - Starting
- &lt;INFO&gt; [15:59:34] soil-align/cli cli.lisp (top level form %main) -
+</p><pre><code class=NIL> &lt;INFO&gt; [15:59:34] pore-align/cli cli.lisp (top level form %main) - Starting
+ &lt;INFO&gt; [15:59:34] pore-align/cli cli.lisp (top level form %main) -
   Will use 6 threads
- &lt;INFO&gt; [16:15:09] soil-align/cli cli.lisp (top level form %main log-eval) -
+ &lt;INFO&gt; [16:15:09] pore-align/cli cli.lisp (top level form %main log-eval) -
   SOIL-ALIGN/CLI::MESSAGE: &quot;Got descriptors of the source image&quot;
- &lt;INFO&gt; [16:15:16] soil-align/cli cli.lisp (top level form %main log-eval) -
+ &lt;INFO&gt; [16:15:16] pore-align/cli cli.lisp (top level form %main log-eval) -
   SOIL-ALIGN/CLI::MESSAGE: &quot;Got descriptors of the reference image&quot;
- &lt;INFO&gt; [16:17:00] soil-align/cli cli.lisp (top level form %main) -
+ &lt;INFO&gt; [16:17:00] pore-align/cli cli.lisp (top level form %main) -
   Found matches between images
- &lt;INFO&gt; [16:17:02] soil-align/cli cli.lisp (top level form %main) -
+ &lt;INFO&gt; [16:17:02] pore-align/cli cli.lisp (top level form %main) -
   Found a transform matrix
- &lt;INFO&gt; [16:17:13] soil-align/cli cli.lisp (top level form %main log-eval) -
+ &lt;INFO&gt; [16:17:13] pore-align/cli cli.lisp (top level form %main log-eval) -
   SOIL-ALIGN/CLI::MESSAGE: &quot;Computed a transformed image&quot;
- &lt;INFO&gt; [16:17:14] soil-align/cli cli.lisp (top level form %main) -
+ &lt;INFO&gt; [16:17:14] pore-align/cli cli.lisp (top level form %main) -
   Summary: 251890/300000 descriptors, 379 independent parameters, 2025 matches,
  1868 inliers, 1068.2292 fit error
 </code></pre><p>
