@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.11.2
+
+* Fix CI script for building Ubuntu package
+
 ## Version 0.11.1
 
 * Incompatible change: LMDB 1.0 is now required.

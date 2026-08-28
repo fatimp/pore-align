@@ -1,6 +1,6 @@
 (defsystem :pore-align
   :name :pore-align
-  :version "0.11.1"
+  :version "0.11.2"
   :author "Vasily Postnicov <shamaz.mazum@gmail.com>"
   :description "Align images of soil"
   :pathname "src"
