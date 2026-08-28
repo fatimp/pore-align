@@ -83,15 +83,15 @@ jobs:
           pore-align-amd64/DEBIAN
           cp src/pore-align pore-align-amd64/usr/bin
           cp /usr/local/lib/libfaiss*  pore-align-amd64/usr/lib/x86_64-linux-gnu
-          cp /usr/local/lib/libsift3D* pore-align-amd64/usr/lib/x86_64-linux-gnu
-          cp /usr/local/lib/liblmdb* pore-align-amd64/usr/lib/x86_64-linux-gnu
+          cp /usr/local/lib/libsift3D.so.2.0 pore-align-amd64/usr/lib/x86_64-linux-gnu
+          cp /usr/local/lib/liblmdb.so.1.0 pore-align-amd64/usr/lib/x86_64-linux-gnu
           cat > pore-align-amd64/DEBIAN/control << EOF
           Package: pore-align
           Version: ${{ steps.version.outputs.full_without_prefix }}
           Architecture: amd64
           Maintainer: Vasily Postnicov <postnicov.vv@mipt.ru>
           Depends: libblas3, liblapack3, libopenblas0, libopenblas0-openmp, liblapacke, libtiff6
-          Conflicts: libfaiss, libfaiss-dev, liblmdb0, liblmdb-dev
+          Conflicts: libfaiss, libfaiss-dev
           Description: A tool for 3D image registration
           EOF
           cat pore-align-amd64/DEBIAN/control

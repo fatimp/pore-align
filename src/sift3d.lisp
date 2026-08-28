@@ -11,7 +11,7 @@
 
 ;; Libraries
 (cffi:define-foreign-library libsift3d
-  (:unix (:or "libsift3D.so.2"))
+  (:unix (:or "libsift3D.so.2.0" "libsift3D.so.2"))
   (t (:default "libsift3D")))
 
 (cffi:use-foreign-library libsift3D)
