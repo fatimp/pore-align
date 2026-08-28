@@ -8,22 +8,35 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+      - name: Checkout LMDB
+        uses: actions/checkout@v7
+        with:
+          repository: LMDB/lmdb
+          path: lmdb
+          ref: LMDB_1.0.1
       - name: Checkout SIFT3D
         uses: actions/checkout@v7
         with:
           repository: fatimp/sift3d
           path: sift3d
+          ref: v2.0.1
       - name: Checkout Faiss
         uses: actions/checkout@v7
         with:
           repository: facebookresearch/faiss
           path: faiss
+          ref: v1.15.0
       - name: Install dependencies
         run: |
           sudo apt update
           sudo apt install build-essential cmake libblas-dev \
-          liblapack-dev libopenblas-dev liblmdb-dev libopenblas-openmp-dev \
+          liblapack-dev libopenblas-dev libopenblas-openmp-dev \
           liblapacke-dev libtiff-dev
+      - name: Build LMDB
+        run: |
+          cd $GITHUB_WORKSPACE/lmdb/libraries/liblmdb
+          make
+          sudo make install
       - name: Build SIFT3D
         run: |
           cd $GITHUB_WORKSPACE/sift3d
