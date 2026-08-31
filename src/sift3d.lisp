@@ -235,24 +235,6 @@
     :from-end t
     :initial-value body)))
 
-(serapeum:-> split-coords
-             ((util:fixed-entries #.(+ util:+descriptor-offset+ util:+descriptor-length+)))
-             (values (util:fixed-entries #.util:+descriptor-offset+)
-                     (util:fixed-entries #.util:+descriptor-length+) &optional))
-(defun split-coords (array)
-  (declare (optimize (speed 3)))
-  (let* ((length (array-dimension array 0))
-         (coords (make-array (list length util:+descriptor-offset+)
-                             :element-type 'single-float))
-         (descr  (make-array (list length util:+descriptor-length+)
-                             :element-type 'single-float)))
-    (loop for i below length do
-          (loop for j below util:+descriptor-offset+ do
-                (setf (aref coords i j) (aref array i j)))
-          (loop for j below util:+descriptor-length+ do
-                (setf (aref descr  i j) (aref array i (+ j util:+descriptor-offset+)))))
-    (values coords descr)))
-
 (defconstant +max-keypoints+ 300000)
 
 ;; Now, high-level function for descriptor arrays
@@ -262,6 +244,7 @@
 (defun descriptors (array)
   "Take an image (3D array of single-floats) and return an array of
 keypoint coordinates and their descriptors."
+  (declare (optimize (speed 3)))
   (with-sift3d-objects ((detector   detector)
                         ;; Here we call TRANSPOSE because Sift3D
                         ;; library accepts arrays in column-major
@@ -281,13 +264,26 @@ keypoint coordinates and their descriptors."
                    (= ncols (+ util:+descriptor-offset+ util:+descriptor-length+)))
         (error 'util:ffi-error :message "Got strange descriptors"))
       (let ((matrix-data (matrix-data matrix))
-            (descriptors (make-array (list nrows ncols) :element-type 'single-float)))
+            (coords (make-array (list nrows util:+descriptor-offset+)
+                                :element-type 'single-float))
+            (descrs (make-array (list nrows util:+descriptor-length+)
+                                :element-type 'single-float)))
         ;; A descriptor is a vector of 771 single float elements.
         ;; The first 3 elements are the keypoint's coordinate and
         ;; the rest are arbitrary numbers which form a metric
         ;; space [0, 1]^{768} with a Euclidean metric.
         ;; SIFT3D returns them as an array with length Nx771
-        (loop for i below (array-total-size descriptors) do
-              (setf (row-major-aref descriptors i)
-                    (cffi:mem-aref matrix-data :float i)))
-        (split-coords descriptors)))))
+        (loop for i below nrows
+              for coords-idx = (array-row-major-index coords i 0)
+              for descrs-idx = (array-row-major-index descrs i 0)
+              for offset fixnum by (+ util:+descriptor-offset+ util:+descriptor-length+)
+              do
+                 (loop for j below util:+descriptor-offset+
+                       for k = (+ offset j) do
+                         (setf (row-major-aref coords (+ coords-idx j))
+                               (cffi:mem-aref matrix-data :float k)))
+                 (loop for j below util:+descriptor-length+
+                       for k = (+ offset util:+descriptor-offset+ j) do
+                         (setf (row-major-aref descrs (+ descrs-idx j))
+                               (cffi:mem-aref matrix-data :float k))))
+        (values coords descrs)))))
