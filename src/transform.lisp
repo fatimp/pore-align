@@ -231,15 +231,25 @@ enables uniform scaling of the coordinates."
 (defun fit-error (fit matches)
   "Calculate the total fit error."
   (declare (optimize (speed 3)))
-  (sqrt
-   (loop for (p1 . p2) in matches sum
-         (let ((v1 (to-affine-vector p1))
-               (v2 (to-affine-vector p2)))
-           (let ((diff (em:sub (em:column
-                                (em:mult fit (em:vector->column v1)) 0)
-                               v2)))
-             (em:dot diff diff)))
-         single-float)))
+  (labels ((%go (matches sum count)
+             (declare (type single-float sum)
+                      (type alexandria:non-negative-fixnum count))
+             (if (null matches)
+                 (/ sum count)
+                 (let* ((p1 (caar matches))
+                        (p2 (cdar matches))
+                        (v1 (to-affine-vector p1))
+                        (v2 (to-affine-vector p2)))
+                   (declare (dynamic-extent v1 v2))
+                   (let* ((v1   (em:vector->column v1))
+                          (fit  (em:mult   fit v1))
+                          (col  (em:column fit 0))
+                          (diff (em:sub    col v2)))
+                     (declare (dynamic-extent v1 fit col diff))
+                     (%go (cdr matches)
+                          (+ sum (em:dot diff diff))
+                          (1+ count)))))))
+    (sqrt (%go matches 0.0 0))))
 
 ;; ============
 ;; Ransac stuff
