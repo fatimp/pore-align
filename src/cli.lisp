@@ -12,6 +12,11 @@
   (:export #:main))
 (in-package :pore-align/cli)
 
+(defparameter *dist-ratio-default*  1.1)
+(defparameter *fit-error-default*   20.0)
+(defparameter *ransac-iter-default* 20000)
+(defparameter *background-default*  0)
+
 (alexandria:define-constant +db-pathname+
     #+unix
     #p"~/.local/share/pore-align/"
@@ -53,6 +58,25 @@
              :message "Background color must be an integer in the range 0..255"))
     n))
 
+(declaim (inline default-number-of-threads-fallback))
+(defun default-number-of-threads-fallback (signal-warn-p)
+  (when signal-warn-p
+    (log:warn
+     #.(concatenate
+        'string
+        "Cannot get default number of threads and will use only 1. "
+        "Use --threads to override this behavior.")))
+  1)
+
+(serapeum:-> default-number-of-threads (boolean)
+             (values (integer 1) &optional))
+(defun default-number-of-threads (signal-warn-p)
+  (declare (ignorable signal-warn-p))
+  #+freebsd
+  (util:clamp (floor (freebsd-sysctl:sysctl-by-name "kern.smp.cores") 2) 1 10)
+  #-freebsd
+  (default-number-of-threads-fallback signal-warn-p))
+
 (defparameter *parser*
   (seq
    (optional
@@ -64,7 +88,8 @@
             :long        "threads"
             :short       #\t
             :fn          #'parse-integer
-            :description "Number of threads to use")
+            :description (format nil "Number of threads to use (Default: ~d)"
+                                 (default-number-of-threads nil)))
     (option :src-workspace "SIDE"
             :long        "src-workspace-side"
             :fn          #'parse-integer
@@ -103,19 +128,31 @@
     (option :background  "COLOR"
             :long        "background-color"
             :short       #\b
-            :description "Background color"
+            :description (format nil "Background color (Default: ~d)"
+                                 *background-default*)
             :fn          #'parse-octet)
     (option :dist-ratio  "C"
             :long        "dist-ratio"
-            :description "Controls what we consider a match"
+            :description (format
+                          nil #.(concatenate
+                                 'string
+                                 "Minimal distance ratio between the closest and the "
+                                 "second to closest neighbors (Default: ~f)")
+                          *dist-ratio-default*)
             :fn          #'parse-dist-ratio)
     (option :fit-error   "E"
             :long        "fit-error"
-            :description "The maximal allowed fit error to treat a sample as inlier"
+            :description (format
+                          nil #.(concatenate
+                                 'string
+                                 "The maximal allowed fit error to treat a sample as "
+                                 "inlier (Default: ~f)")
+                          *fit-error-default*)
             :fn          #'parse-float)
     (option :ransac-iter "M"
             :long        "ransac-iterations"
-            :description "Number of RANSAC iterations"
+            :description (format nil "Number of RANSAC iterations (Default: ~d)"
+                                 *ransac-iter-default*)
             :fn          #'parse-integer))
    (argument :reference "reference")
    (argument :source    "source")))
@@ -125,20 +162,6 @@
   (let ((list (multiple-value-list (apply f args))))
     (log:info message)
     (apply #'values list)))
-
-(declaim (inline number-of-threads))
-(defun number-of-threads (n)
-  (if n n
-      #+freebsd
-      (min (floor (freebsd-sysctl:sysctl-by-name "kern.smp.cores") 2) 10)
-      #-freebsd
-      (progn
-        (log:warn
-         #.(concatenate
-            'string
-            "Cannot get default number of threads and will use only 1. "
-            "Use --threads to override this behavior."))
-        1)))
 
 (serapeum:-> maybe-cut ((util:image (unsigned-byte 8))
                         (or null alexandria:positive-fixnum))
@@ -169,8 +192,8 @@
 
 (defun %main ()
   (let* ((args (parse-argv *parser*))
-         (dist-ratio        (%assoc :dist-ratio       args 1.2))
-         (fit-error         (%assoc :fit-error        args 100.0))
+         (dist-ratio        (%assoc :dist-ratio       args *dist-ratio-default*))
+         (fit-error         (%assoc :fit-error        args *fit-error-default*))
          (trans-image       (%assoc :output           args))
          (trans-matrix      (%assoc :transform-output args))
          (scalingp          (%assoc :scaling          args))
@@ -181,11 +204,11 @@
                             (%assoc :workspace        args)))
          (ref-workspace (or (%assoc :ref-workspace    args)
                             (%assoc :workspace        args)))
-         (ransac-iter       (%assoc :ransac-iter      args 5000))
-         (background        (%assoc :background       args 0))
+         (ransac-iter       (%assoc :ransac-iter      args *ransac-iter-default*))
+         (background        (%assoc :background       args *background-default*))
          (nthreads          (%assoc :nthreads         args))
-         (nthreads (number-of-threads nthreads))
-         (db-pathname (get-db-pathname)))
+         (nthreads          (or nthreads (default-number-of-threads t)))
+         (db-pathname       (get-db-pathname)))
     (unless (or trans-image trans-matrix)
       (error 'util:user-input-error :message "No output selected"))
     (log:config (if (%assoc :verbose args) :info :warn))

@@ -9,7 +9,6 @@
            #:+descriptor-offset+
            #:+descriptor-length+
            #:transpose-3d
-           #:transpose-2d
            #:interpolate
            #:cut-from-center
            #:generic-error
@@ -17,7 +16,8 @@
            #:ffi-error
            #:db-error
            #:user-input-error
-           #:io-error))
+           #:io-error
+           #:clamp))
 (in-package :pore-align/util)
 
 (defconstant +descriptor-offset+ 3)
@@ -142,6 +142,10 @@
      (setf (aref result i j k)
            (aref array (+ i off-x) (+ j off-y) (+ k off-z))))
     (values result off-x off-y off-z)))
+
+(declaim (inline clamp))
+(defun clamp (x min max)
+  (min (max x min) max))
 
 ;; Where else to put this?
 (define-condition generic-error (error)

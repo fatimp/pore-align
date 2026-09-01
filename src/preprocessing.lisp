@@ -18,18 +18,14 @@
      (bin-dimensions-w dim)
      (bin-dimensions-d dim)))
 
-(declaim (inline clamp))
-(defun clamp (x min max)
-  (min (max x min) max))
-
 (serapeum:-> histogram-row-major-index
              ((util:histograms *) fixnum fixnum fixnum)
              (values alexandria:non-negative-fixnum &optional))
 (declaim (inline histogram-row-major-index))
 (defun histogram-row-major-index (histogram i j k)
-  (let ((i (clamp i 0 (1- (array-dimension histogram 0))))
-        (j (clamp j 0 (1- (array-dimension histogram 1))))
-        (k (clamp k 0 (1- (array-dimension histogram 2)))))
+  (let ((i (util:clamp i 0 (1- (array-dimension histogram 0))))
+        (j (util:clamp j 0 (1- (array-dimension histogram 1))))
+        (k (util:clamp k 0 (1- (array-dimension histogram 2)))))
     (array-row-major-index histogram i j k 0)))
 
 (serapeum:-> histograms
