@@ -90,3 +90,7 @@
  (:class qlot/source/github:source-github
   :initargs (:repos "shamazmazum/lmdb" :ref nil :branch nil :tag "v1.0")
   :version "github-816af8496019711f6a7456fa4f7fcdb3da1e2b42"))
+("fast-io" .
+ (:class qlot/source/ql:source-ql
+  :initargs (:%version :latest)
+  :version "ql-2022-11-06"))
