@@ -16,6 +16,7 @@
 (defparameter *fit-error-default*   20.0)
 (defparameter *ransac-iter-default* 20000)
 (defparameter *background-default*  0)
+(defparameter *seed-points-default* 15)
 
 (alexandria:define-constant +db-pathname+
     #+unix
@@ -58,6 +59,13 @@
              :message "Background color must be an integer in the range 0..255"))
     n))
 
+(defun parse-positive-integer (string)
+  (let ((n (ignore-errors (parse-integer string))))
+    (unless (and n (plusp n))
+      (error 'util:user-input-error
+             :message "Positive integer required"))
+    n))
+
 (declaim (inline default-number-of-threads-fallback))
 (defun default-number-of-threads-fallback (signal-warn-p)
   (when signal-warn-p
@@ -87,27 +95,34 @@
     (option :nthreads    "N"
             :long        "threads"
             :short       #\t
-            :fn          #'parse-integer
+            :fn          #'parse-positive-integer
             :description (format nil "Number of threads to use (Default: ~d)"
                                  (default-number-of-threads nil)))
     (option :src-workspace "SIDE"
             :long        "src-workspace-side"
-            :fn          #'parse-integer
+            :fn          #'parse-positive-integer
             :description #.(concatenate
                             'string
                             "Side of a workspace which is cut from center of the "
                             "source image. Has a precedence over -w option."))
     (option :ref-workspace "SIDE"
             :long        "ref-workspace-side"
-            :fn          #'parse-integer
+            :fn          #'parse-positive-integer
             :description #.(concatenate
                             'string
                             "Side of a workspace which is cut from center of the "
                             "reference image. Has a precedence over -w option."))
-    (option :workspace "SIDE"
+    (option :seed-points "N"
+            :short       #\p
+            :long        "seed-points"
+            :fn          #'parse-positive-integer
+            :description (format
+                          nil "Number of seed points for RANSAC (Default: ~d)"
+                          *seed-points-default*))
+    (option :workspace   "SIDE"
             :long        "workspace-side"
             :short       #\w
-            :fn          #'parse-integer
+            :fn          #'parse-positive-integer
             :description "Side of a workspace which is cut from center of the input images")
     (option :transform-output "m.npy"
             :short       #\O
@@ -153,7 +168,7 @@
             :long        "ransac-iterations"
             :description (format nil "Number of RANSAC iterations (Default: ~d)"
                                  *ransac-iter-default*)
-            :fn          #'parse-integer))
+            :fn          #'parse-positive-integer))
    (argument :reference "reference")
    (argument :source    "source")))
 
@@ -205,6 +220,7 @@
          (ref-workspace (or (%assoc :ref-workspace    args)
                             (%assoc :workspace        args)))
          (ransac-iter       (%assoc :ransac-iter      args *ransac-iter-default*))
+         (seed-points       (%assoc :seed-points      args *seed-points-default*))
          (background        (%assoc :background       args *background-default*))
          (nthreads          (%assoc :nthreads         args))
          (nthreads          (or nthreads (default-number-of-threads t)))
@@ -250,8 +266,9 @@
             (em:set-num-threads 1)
             (let ((fit (trans:ransac (trans:rigid-transform-fit scalingp rot-constraint)
                                      matches
-                                     :iterations ransac-iter
-                                     :err        fit-error)))
+                                     :seed-points seed-points
+                                     :iterations  ransac-iter
+                                     :err         fit-error)))
               (unless fit
                 (log:info "Summary: ~d/~d descriptors, ~d matches"
                           (array-dimension src-kp 0)

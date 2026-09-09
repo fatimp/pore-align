@@ -73,25 +73,29 @@
    arguments the following short help appears:
 @begin(code)
 % pore-align
-Abrupt ending of the input: argument #<ARGUMENT {11004A6423}> missing
-Usage: pore-align [-v|--verbose] [-t|--threads N] [-w|--workspace-side S]
-                  [-O|--transform-output m.npy] [-o|--output out.npy]
-                  [--rotation-constraint AXIS] [-s|--scaling]
-                  [-b|--background-color COLOR] [--dist-ratio C]
+Abrupt ending of the input: argument #<ARGUMENT {11004A35A3}> missing
+Usage: pore-align [-v|--verbose] [-t|--threads N] [--src-workspace-side SIDE]
+                  [--ref-workspace-side SIDE] [-p|--seed-points N]
+                  [-w|--workspace-side SIDE] [-O|--transform-output m.npy]
+                  [-o|--output out.npy] [--rotation-constraint AXIS]
+                  [-s|--scaling] [-b|--background-color COLOR] [--dist-ratio C]
                   [--fit-error E] [--ransac-iterations M]
                   reference source
 
 Description of flags and options
---ransac-iterations M           Number of RANSAC iterations
---fit-error E                   The maximal allowed fit error to treat a sample as inlier
---dist-ratio C                  Controls what we consider a match
--b|--background-color COLOR     Background color
+--ransac-iterations M           Number of RANSAC iterations (Default: 20000)
+--fit-error E                   The maximal allowed fit error to treat a sample as inlier (Default: 20.0)
+--dist-ratio C                  Minimal distance ratio between the closest and the second to closest neighbors (Default: 1.1)
+-b|--background-color COLOR     Background color (Default: 0)
 -s|--scaling                    Add uniform scaling to the model
 --rotation-constraint AXIS      Constrain rotation to be around only one axis (0, 1 or 2)
 -o|--output out.npy             Output file name for a transformed image (.npy or .raw)
 -O|--transform-output m.npy     Output file name for a transform matrix (.npy)
--w|--workspace-side S           Side of a workspace which is cut from center of the input images
--t|--threads N                  Number of threads to use
+-w|--workspace-side SIDE        Side of a workspace which is cut from center of the input images
+-p|--seed-points N              Number of seed points for RANSAC (Default: 15)
+--ref-workspace-side SIDE       Side of a workspace which is cut from center of the reference image. Has a precedence over -w option.
+--src-workspace-side SIDE       Side of a workspace which is cut from center of the source image. Has a precedence over -w option.
+-t|--threads N                  Number of threads to use (Default: 4)
 -v|--verbose                    Be verbose
 @end(code)
 
@@ -130,12 +134,13 @@ Description of flags and options
    neighbors according to Euclidean distance between corresponding
    descriptors. Two points \(p_{ref}\) and \(p_{src}\) match if \(d
    \rho(p_{ref}, p_{src}) < \rho(p_{ref}, p'_{src})\). Here \(p'_{src}\) is the
-   second-nearest feature point and \(d\) is the distance ratio. The default
-   value is 1.2)
+   second-nearest feature point and \(d\) is the distance ratio.)
      @item(@c(--fit-error) — A parameter used in the RANSAC algorithm to
-   determine if a model fits a point. The default value is 100.0)
+   determine if a model fits a point.)
+     @item(@c(-p) — A number of seed points for RANSAC to make an initial
+   fit.)
      @item(@c(--ransac-iterations) — A number of RANSAC iterations to find a
-   model which fits the feature points. The default value is 5000.)
+   model which fits the feature points.)
    @end(list)
 
    pore-align utilises LMDB to store image descriptors. The DB is written at
