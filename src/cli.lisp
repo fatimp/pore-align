@@ -174,9 +174,9 @@
 
 (declaim (inline log-eval))
 (defun log-eval (message f &rest args)
-  (let ((list (multiple-value-list (apply f args))))
+  (let ((value (apply f args)))
     (log:info message)
-    (apply #'values list)))
+    value))
 
 (serapeum:-> maybe-cut ((util:image (unsigned-byte 8))
                         (or null alexandria:positive-fixnum))
@@ -242,64 +242,67 @@
         (log:info "Will use ~d threads" nthreads)
         (em:set-num-threads nthreads)
         (setq lparallel:*kernel* (lparallel:make-kernel nthreads))
-        (serapeum:mvlet* ((src-kp src-desc-pca src-vt src-means
-                                  (log-eval "Got descriptors of the source image"
-                                            #'db:descriptors-cached source
-                                            db-pathname))
-                          (ref-kp ref-desc-pca ref-vt ref-means
-                                  (log-eval "Got descriptors of the reference image"
-                                            #'db:descriptors-cached reference
-                                            db-pathname))
-                          ;; Convert descriptors in one PCA space
-                          (ref-desc src-desc
-                                    (pca:restore-descriptors
-                                     ref-desc-pca ref-vt ref-means
-                                     src-desc-pca src-vt src-means)))
-          ;; Find matches between descriptors
-          (let ((matches
-                  (match:match-descriptors
-                   (add-offsets! rx ry rz ref-kp)
-                   (add-offsets! sx sy sz src-kp)
-                   ref-desc src-desc dist-ratio)))
-            (log:info "Found matches between images")
-            ;; RANSAC is parallelized on the lisp side already
-            (em:set-num-threads 1)
-            (let ((fit (trans:ransac (trans:rigid-transform-fit scalingp rot-constraint)
-                                     matches
-                                     :seed-points seed-points
-                                     :iterations  ransac-iter
-                                     :err         fit-error)))
-              (unless fit
-                (log:info "Summary: ~d/~d descriptors, ~d matches"
-                          (array-dimension src-kp 0)
-                          (array-dimension ref-kp 0)
-                          (length matches))
-                (log:error "Consensus is not achieved")
-                (uiop:quit 0))
-              (log:info "Found a transform matrix")
-              (when trans-matrix
-                (numpy-npy:store-array (trans:ransac-result-transform fit) trans-matrix))
-              (when trans-image
-                (io:write-image
-                 (log-eval "Computed a transformed image"
-                           #'atrans:apply-transform
-                           (if src-workspace
-                               ;; Load a bigger image once more
-                               (io:read-image (%assoc :source args))
-                               source)
-                           (trans:ransac-result-transform fit) ref-shape
-                           :background background)
-                 trans-image))
-              (log:info #.(concatenate
-                           'string
-                           "Summary: ~d/~d descriptors, ~d independent parameters, "
-                           "~d matches, ~d inliers, ~f fit error")
+        (serapeum:mvlet*
+            ((ref-descriptors (log-eval "Got descriptors of the reference image"
+                                        #'db:descriptors-cached reference
+                                        db-pathname))
+             (src-descriptors (log-eval "Got descriptors of the source image"
+                                        #'db:descriptors-cached source
+                                        db-pathname))
+             ;; Convert descriptors in one PCA space
+             (ref-desc src-desc (pca:restore-descriptors
+                                 (db:descriptor-pca-descr ref-descriptors)
+                                 (db:descriptor-pca-trans ref-descriptors)
+                                 (db:descriptor-means     ref-descriptors)
+                                 (db:descriptor-pca-descr src-descriptors)
+                                 (db:descriptor-pca-trans src-descriptors)
+                                 (db:descriptor-means     src-descriptors)))
+             ;; Find matches between descriptors
+             (ref-kp (db:descriptor-coords ref-descriptors))
+             (src-kp (db:descriptor-coords src-descriptors))
+             (matches (match:match-descriptors
+                       (add-offsets! rx ry rz ref-kp)
+                       (add-offsets! sx sy sz src-kp)
+                       ref-desc src-desc dist-ratio)))
+          (log:info "Found matches between images")
+          ;; RANSAC is parallelized on the lisp side already
+          (em:set-num-threads 1)
+          (let ((fit (trans:ransac (trans:rigid-transform-fit scalingp rot-constraint)
+                                   matches
+                                   :seed-points seed-points
+                                   :iterations  ransac-iter
+                                   :err         fit-error)))
+            (unless fit
+              (log:info "Summary: ~d/~d descriptors, ~d matches"
                         (array-dimension src-kp 0)
                         (array-dimension ref-kp 0)
-                        (array-dimension ref-desc 1)
-                        (length matches)
-                        (trans:ransac-result-inliers fit)
-                        (trans:ransac-result-error   fit)))))))))
+                        (length matches))
+              (log:error "Consensus is not achieved")
+              (uiop:quit 0))
+            (log:info "Found a transform matrix")
+            (when trans-matrix
+              (numpy-npy:store-array (trans:ransac-result-transform fit) trans-matrix))
+            (when trans-image
+              (io:write-image
+               (log-eval "Computed a transformed image"
+                         #'atrans:apply-transform
+                         (if src-workspace
+                             ;; Load a bigger image once more
+                             (io:read-image (%assoc :source args))
+                             source)
+                         (trans:ransac-result-transform fit) ref-shape
+                         :background background)
+               trans-image))
+            (log:info #.(concatenate
+                         'string
+                         "Summary: ~d/~d descriptors, ~d independent parameters, "
+                         "~d matches, ~d inliers, ~f fit error")
+                      (array-dimension src-kp 0)
+                      (array-dimension ref-kp 0)
+                      (array-dimension ref-desc 1)
+                      (length matches)
+                      (trans:ransac-result-inliers fit)
+                      (trans:ransac-result-error   fit))))))))
 
 (defun handle-error (c)
   (princ c *error-output*)

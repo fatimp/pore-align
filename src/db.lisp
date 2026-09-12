@@ -4,7 +4,12 @@
                     (#:pca    #:pore-align/pca)
                     (#:pre    #:pore-align/preprocessing)
                     (#:sift3d #:pore-align/sift3d))
-  (:export #:descriptors-cached))
+  (:export #:descriptors-cached
+           #:descriptor
+           #:descriptor-coords
+           #:descriptor-pca-descr
+           #:descriptor-pca-trans
+           #:descriptor-means))
 (in-package :pore-align/db)
 
 (serapeum:-> image-hash ((util:image (unsigned-byte 8)))
@@ -24,26 +29,41 @@
      digest (sb-ext:array-storage-vector array))
     (ironclad:produce-digest digest)))
 
+(serapeum:defconstructor descriptor
+  (coords    (util:fixed-entries #.util:+descriptor-offset+))
+  (pca-descr (util:fixed-entries *))
+  (pca-trans (util:fixed-entries #.util:+descriptor-length+))
+  (means     (simple-array single-float (#.util:+descriptor-length+))))
+
 (serapeum:-> encode-object (t)
              (values (simple-array (unsigned-byte 8) (*)) &optional))
+(declaim (inline encode-object))
 (defun encode-object (object)
-  (let ((stream (fast-io:make-output-buffer)))
-    (conspack:encode-to-buffer object stream)
-    (fast-io:finish-output-buffer stream)))
+  (let ((stream (make-instance 'fast-io:fast-output-stream)))
+    (cl-store:store object stream)
+    (fast-io:finish-output-stream stream)))
+
+(serapeum:-> encode-descriptor (descriptor)
+             (values (simple-array (unsigned-byte 8) (*)) &optional))
+(defun encode-descriptor (descriptor)
+  (encode-object descriptor))
 
 (serapeum:-> decode-object ((simple-array (unsigned-byte 8) (*)))
              (values t &optional))
+(declaim (inline decode-object))
 (defun decode-object (octets)
-  (nth-value
-   0 (conspack:decode octets)))
+  (let ((stream (make-instance 'fast-io::fast-input-stream :vector octets)))
+    (cl-store:restore stream)))
 
+(serapeum:-> decode-descriptor ((simple-array (unsigned-byte 8) (*)))
+             (values descriptor &optional))
+(defun decode-descriptor (octets)
+  (decode-object octets))
+
+;; TODO: Update documentation
 (serapeum:-> descriptors-cached
              ((util:image (unsigned-byte 8)) pathname)
-             (values (util:fixed-entries #.util:+descriptor-offset+)
-                     (util:fixed-entries *)
-                     (util:fixed-entries #.util:+descriptor-length+)
-                     (simple-array single-float (#.util:+descriptor-length+))
-                     &optional))
+             (values descriptor &optional))
 (defun descriptors-cached (array db-pathname)
   "Calculate image descriptors using 3D SIFT and cache them in a
 database. The next time the descriptors are calculated for this
@@ -66,12 +86,8 @@ descriptor component means."
         (let ((data (lmdb+:with-txn (:env env)
                       (lmdb+:get db hash))))
           ;; Descriptors are in the database, return them
-          (if data
-              ;; TODO: Do it without intermediate list consing ;)
-              (destructuring-bind (coord pca vt means)
-                  (decode-object data)
-                  (values coord pca vt means))
-              ;; else
+          (if data (decode-descriptor data)
+              ;; Else
               (multiple-value-bind (coords descr)
                   (sift3d:descriptors (pre:clahe array))
                 (if (< (array-dimension descr 0)
@@ -79,10 +95,9 @@ descriptor component means."
                     (error 'util:db-error :message "Too small number of feature points")
                     (multiple-value-bind (vt means)
                         (pca:fit-pca descr 0.95)
-                      (let ((pca (pca:transform-pca descr vt means)))
+                      (let* ((pca (pca:transform-pca descr vt means))
+                             (descriptor (descriptor coords pca vt means)))
                         (lmdb+:with-txn (:env env :write t)
                           (lmdb+:put
-                           db hash
-                           (encode-object
-                            (list coords pca vt means))))
-                        (values coords pca vt means)))))))))))
+                           db hash (encode-descriptor descriptor)))
+                        descriptor))))))))))

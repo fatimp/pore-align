@@ -20,8 +20,8 @@
                :lmdb
                :vector-sum
                :lparallel
-               :cl-conspack
                :fast-io
+               :cl-store
                :cl-libtiff
                (:feature :freebsd :freebsd-sysctl)
                :pore-align/util
