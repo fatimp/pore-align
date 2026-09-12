@@ -2,8 +2,8 @@
   (:use #:cl #:command-line-parse #:parse-float)
   (:local-nicknames (#:match  #:pore-align/match)
                     (#:util   #:pore-align/util)
-                    (#:sift3d #:pore-align/sift3d)
                     (#:db     #:pore-align/db)
+                    (#:dsc    #:pore-align/descriptor)
                     (#:io     #:pore-align/io)
                     (#:pca    #:pore-align/pca)
                     (#:trans  #:pore-align/transform)
@@ -245,21 +245,21 @@
         (serapeum:mvlet*
             ((ref-descriptors (log-eval "Got descriptors of the reference image"
                                         #'db:descriptors-cached reference
-                                        db-pathname))
+                                        db-pathname #'dsc:calculate-descriptor))
              (src-descriptors (log-eval "Got descriptors of the source image"
                                         #'db:descriptors-cached source
-                                        db-pathname))
+                                        db-pathname #'dsc:calculate-descriptor))
              ;; Convert descriptors in one PCA space
              (ref-desc src-desc (pca:restore-descriptors
-                                 (db:descriptor-pca-descr ref-descriptors)
-                                 (db:descriptor-pca-trans ref-descriptors)
-                                 (db:descriptor-means     ref-descriptors)
-                                 (db:descriptor-pca-descr src-descriptors)
-                                 (db:descriptor-pca-trans src-descriptors)
-                                 (db:descriptor-means     src-descriptors)))
+                                 (dsc:descriptor-pca-descr ref-descriptors)
+                                 (dsc:descriptor-pca-trans ref-descriptors)
+                                 (dsc:descriptor-means     ref-descriptors)
+                                 (dsc:descriptor-pca-descr src-descriptors)
+                                 (dsc:descriptor-pca-trans src-descriptors)
+                                 (dsc:descriptor-means     src-descriptors)))
              ;; Find matches between descriptors
-             (ref-kp (db:descriptor-coords ref-descriptors))
-             (src-kp (db:descriptor-coords src-descriptors))
+             (ref-kp (dsc:descriptor-coords ref-descriptors))
+             (src-kp (dsc:descriptor-coords src-descriptors))
              (matches (match:match-descriptors
                        (add-offsets! rx ry rz ref-kp)
                        (add-offsets! sx sy sz src-kp)

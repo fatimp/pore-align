@@ -14,7 +14,7 @@
            #:generic-error
            #:internal-error
            #:ffi-error
-           #:db-error
+           #:descriptor-error
            #:user-input-error
            #:io-error
            #:clamp))
@@ -162,10 +162,10 @@
   (:report (lambda (c s)
              (format s "FFI error: ~a" (error-message c)))))
 
-(define-condition db-error (internal-error)
+(define-condition descriptor-error (internal-error)
   ()
   (:report (lambda (c s)
-             (format s "DB error: ~a" (error-message c)))))
+             (format s "Descriptor error: ~a" (error-message c)))))
 
 (define-condition user-input-error (generic-error)
   ()

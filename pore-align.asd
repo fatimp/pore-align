@@ -28,6 +28,7 @@
                :pore-align/preprocessing
                :pore-align/pca
                :pore-align/sift3d
+               :pore-align/descriptor
                :pore-align/db
                :pore-align/match
                :pore-align/transform
