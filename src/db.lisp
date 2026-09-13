@@ -4,8 +4,44 @@
                     ;; FIXME: for %assoc
                     (#:cmd  #:command-line-parse)
                     (#:dsc  #:pore-align/descriptor))
-  (:export #:descriptors-cached))
+  (:export #:descriptors-cached
+           #:matches-cached))
 (in-package :pore-align/db)
+
+(serapeum:-> matches-hash ((simple-array (unsigned-byte 8) (32))
+                           (simple-array (unsigned-byte 8) (32))
+                           (or util:image-offset null)
+                           (or util:image-offset null)
+                           (single-float 1.0))
+             (values (simple-array (unsigned-byte 8) (32)) &optional))
+(defun matches-hash (ref-hash src-hash ref-offset src-offset dist-ratio)
+  (let ((digest (ironclad:make-digest 'ironclad:sha256)))
+    (flet ((update-offset! (offset)
+             (let ((buffer (make-array (* 3 4)
+                                       :element-type '(unsigned-byte 8))))
+               (setf (nibbles:ub32ref/le buffer 0)
+                     (util:image-offset-x offset)
+                     (nibbles:ub32ref/le buffer 4)
+                     (util:image-offset-y offset)
+                     (nibbles:ub32ref/le buffer 8)
+                     (util:image-offset-z offset))
+               (ironclad:update-digest digest buffer)))
+           (update-float! (x)
+             (let ((buffer (make-array 4 :element-type '(unsigned-byte 8))))
+               (setf (nibbles:ieee-single-ref/le buffer 0) x)
+               (ironclad:update-digest digest buffer))))
+      ;; Store hashes of reference and source
+      (ironclad:update-digest digest ref-hash)
+      (ironclad:update-digest digest src-hash)
+      ;; Store hash of reference offset (if any)
+      (when ref-offset
+        (update-offset! ref-offset))
+      ;; Store hash of source offset (if any)
+      (when src-offset
+        (update-offset! src-offset))
+      ;; Hash distance ratio
+      (update-float! dist-ratio)
+      (ironclad:produce-digest digest))))
 
 (serapeum:-> image-hash ((util:image (unsigned-byte 8)))
              (values (simple-array (unsigned-byte 8) (32)) &optional))
@@ -58,6 +94,11 @@
 (defun encode-descriptor (descriptor)
   (encode-object descriptor))
 
+(serapeum:-> encode-matches (list)
+             (values (simple-array (unsigned-byte 8) (*)) &optional))
+(defun encode-matches (matches)
+  (encode-object matches))
+
 (serapeum:-> decode-object ((simple-array (unsigned-byte 8) (*)))
              (values t &optional))
 (declaim (inline decode-object))
@@ -70,11 +111,18 @@
 (defun decode-descriptor (octets)
   (decode-object octets))
 
+(serapeum:-> decode-matches ((simple-array (unsigned-byte 8) (*)))
+             (values list &optional))
+(defun decode-matches (octets)
+  (decode-object octets))
+
 ;; TODO: Update documentation
+;; FIXME: This function takes %env while matches-cached takes DB pathname.
+;;        This is weird.
 (serapeum:-> descriptors-cached
-             (lmdb:env (util:image (unsigned-byte 8)) dsc:descriptor-fn)
+             (lmdb:env (util:image (unsigned-byte 8)))
              (values dsc:descriptor &optional))
-(defun descriptors-cached (env array descriptor-fn)
+(defun descriptors-cached (env array)
   "Calculate image descriptors using 3D SIFT and cache them in a
 database. The next time the descriptors are calculated for this
 particular array the results are read from the database. The database
@@ -93,7 +141,56 @@ descriptor component means."
                  (lmdb+:get db hash))))
     ;; Descriptors are in the database, return them
     (if data (decode-descriptor data)
-        (let ((descriptor (funcall descriptor-fn array)))
+        (let ((descriptor (dsc:calculate-descriptor array)))
           (lmdb+:with-txn (:env env :write t)
             (lmdb+:put db hash (encode-descriptor descriptor)))
           descriptor))))
+
+(serapeum:-> %descriptors-with-logging ((function () (values dsc:descriptor &optional))
+                                        string)
+             (values dsc:descriptor &optional))
+(defun %descriptors-with-logging (f which)
+  (let ((dsc (funcall f)))
+    (log:info "Got ~d descriptors of the ~a image"
+              (dsc:descriptor-npoints dsc)
+              which)
+    dsc))
+
+(defmacro descriptors-with-logging (which &body body)
+  `(%descriptors-with-logging
+    (lambda ()
+      ,@body)
+    ,which))
+
+;; TODO: Write documentation
+(serapeum:-> matches-cached ((or string pathname)
+                             (util:image (unsigned-byte 8))
+                             (util:image (unsigned-byte 8))
+                             (or util:image-offset null)
+                             (or util:image-offset null)
+                             (single-float 1.0))
+             (values list &optional))
+(defun matches-cached (db-pathname ref src ref-offset src-offset dist-ratio)
+  (let* ((ref-hash (image-hash ref))
+         (src-hash (image-hash src))
+         (hash     (matches-hash ref-hash src-hash ref-offset src-offset dist-ratio)))
+    (lmdb+:with-env (env (uiop:native-namestring db-pathname)
+                         :if-does-not-exist :create
+                         :max-dbs           2
+                         :map-size          (* 64 (expt 2 30)))
+      (let* ((db   (lmdb+:get-db "matches" :env env))
+             (data (lmdb+:with-txn (:env env)
+                     (lmdb+:get db hash))))
+        (if data (decode-matches data)
+            (let* ((ref-descriptors
+                     (descriptors-with-logging "reference"
+                       (descriptors-cached env ref)))
+                   (src-descriptors
+                     (descriptors-with-logging "source"
+                       (dsc:calculate-descriptor src)))
+                   (matches (dsc:calculate-matches
+                             ref-descriptors src-descriptors
+                             ref-offset src-offset dist-ratio)))
+              (lmdb+:with-txn (:env env :write t)
+                (lmdb+:put db hash (encode-matches matches)))
+              matches))))))

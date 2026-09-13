@@ -124,9 +124,9 @@
           v)))))
 
 (serapeum:defconstructor image-offset
-  (x alexandria:non-negative-fixnum)
-  (y alexandria:non-negative-fixnum)
-  (z alexandria:non-negative-fixnum))
+  (x (unsigned-byte 32))
+  (y (unsigned-byte 32))
+  (z (unsigned-byte 32)))
 
 (serapeum:-> cut-from-center ((image (unsigned-byte 8)) alexandria:positive-fixnum)
              (values (image (unsigned-byte 8)) image-offset &optional))
