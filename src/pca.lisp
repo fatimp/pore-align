@@ -117,11 +117,13 @@ vectors in the PCA space back into the descriptor space."
                                   (simple-array single-float (#.util:+descriptor-length+)))
              (values (simple-array single-float (* *))
                      (simple-array single-float (* *))
+                     alexandria:array-index
                      &optional))
 (defun restore-descriptors (d1 vt1 means1 d2 vt2 means2)
   "Convert two sets of descriptors to the same PCA space (one with
 bigger dimensionality)."
-  (if (> (array-dimension d1 1)
-         (array-dimension d2 1))
-      (values d1 (transform-pca (invert-pca d2 vt2 means2) vt1 means1))
-      (values    (transform-pca (invert-pca d1 vt1 means1) vt2 means2) d2)))
+  (let ((length1 (array-dimension d1 1))
+        (length2 (array-dimension d2 1)))
+    (if (> length1 length2)
+        (values d1 (transform-pca (invert-pca d2 vt2 means2) vt1 means1)    length1)
+        (values    (transform-pca (invert-pca d1 vt1 means1) vt2 means2) d2 length2))))

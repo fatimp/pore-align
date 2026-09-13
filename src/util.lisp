@@ -11,6 +11,10 @@
            #:transpose-3d
            #:interpolate
            #:cut-from-center
+           #:image-offset
+           #:image-offset-x
+           #:image-offset-y
+           #:image-offset-z
            #:generic-error
            #:internal-error
            #:ffi-error
@@ -119,12 +123,13 @@
                (v (interp1d v0 v1 ri)))
           v)))))
 
+(serapeum:defconstructor image-offset
+  (x alexandria:non-negative-fixnum)
+  (y alexandria:non-negative-fixnum)
+  (z alexandria:non-negative-fixnum))
+
 (serapeum:-> cut-from-center ((image (unsigned-byte 8)) alexandria:positive-fixnum)
-             (values (image (unsigned-byte 8))
-                     alexandria:non-negative-fixnum
-                     alexandria:non-negative-fixnum
-                     alexandria:non-negative-fixnum
-                     &optional))
+             (values (image (unsigned-byte 8)) image-offset &optional))
 (defun cut-from-center (array side)
   (declare (optimize (speed 3)))
   (let* ((h (array-dimension array 0))
@@ -141,7 +146,7 @@
     (loop-array (result (i j k))
      (setf (aref result i j k)
            (aref array (+ i off-x) (+ j off-y) (+ k off-z))))
-    (values result off-x off-y off-z)))
+    (values result (image-offset off-x off-y off-z))))
 
 (declaim (inline clamp))
 (defun clamp (x min max)

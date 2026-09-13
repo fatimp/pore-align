@@ -1,11 +1,9 @@
 (defpackage pore-align/cli
   (:use #:cl #:command-line-parse #:parse-float)
-  (:local-nicknames (#:match  #:pore-align/match)
-                    (#:util   #:pore-align/util)
+  (:local-nicknames (#:util   #:pore-align/util)
                     (#:db     #:pore-align/db)
                     (#:dsc    #:pore-align/descriptor)
                     (#:io     #:pore-align/io)
-                    (#:pca    #:pore-align/pca)
                     (#:trans  #:pore-align/transform)
                     (#:atrans #:pore-align/array-transform)
                     (#:em     #:entzauberte-matrices))
@@ -181,29 +179,11 @@
 (serapeum:-> maybe-cut ((util:image (unsigned-byte 8))
                         (or null alexandria:positive-fixnum))
              (values (util:image (unsigned-byte 8))
-                     alexandria:non-negative-fixnum
-                     alexandria:non-negative-fixnum
-                     alexandria:non-negative-fixnum
-                     &optional))
+                     (or util:image-offset null) &optional))
 (defun maybe-cut (array side)
   (if side
       (util:cut-from-center array side)
-      (values array 0 0 0)))
-
-(serapeum:-> add-offsets!
-             (alexandria:non-negative-fixnum
-              alexandria:non-negative-fixnum
-              alexandria:non-negative-fixnum
-              (util:fixed-entries #.util:+descriptor-offset+))
-             (values (util:fixed-entries #.util:+descriptor-offset+) &optional))
-(defun add-offsets! (off-x off-y off-z keypoints)
-  (declare (optimize (speed 3)))
-  (unless (= off-x off-y off-z 0)
-    (loop for i below (array-dimension keypoints 0) do
-          (incf (aref keypoints i 0) off-x)
-          (incf (aref keypoints i 1) off-y)
-          (incf (aref keypoints i 2) off-z)))
-  keypoints)
+      (values array nil)))
 
 (defun %main ()
   (let* ((args (parse-argv *parser*))
@@ -232,8 +212,8 @@
     (let* ((source    (io:read-image source))
            (reference (io:read-image reference))
            (ref-shape (array-dimensions reference)))
-      (serapeum:mvlet ((source    sx sy sz (maybe-cut source    src-workspace))
-                       (reference rx ry rz (maybe-cut reference ref-workspace)))
+      (serapeum:mvlet ((source    src-offset (maybe-cut source    src-workspace))
+                       (reference ref-offset (maybe-cut reference ref-workspace)))
         ;; Run a full GC because uncut arrays may be really big, we need
         ;; to collect them now because later we will run foreign code
         ;; which allocates a lot.
@@ -242,27 +222,17 @@
         (log:info "Will use ~d threads" nthreads)
         (em:set-num-threads nthreads)
         (setq lparallel:*kernel* (lparallel:make-kernel nthreads))
-        (serapeum:mvlet*
-            ((ref-descriptors (log-eval "Got descriptors of the reference image"
-                                        #'db:descriptors-cached reference
-                                        db-pathname #'dsc:calculate-descriptor))
-             (src-descriptors (log-eval "Got descriptors of the source image"
-                                        #'dsc:calculate-descriptor source))
-             ;; Convert descriptors in one PCA space
-             (ref-desc src-desc (pca:restore-descriptors
-                                 (dsc:descriptor-pca-descr ref-descriptors)
-                                 (dsc:descriptor-pca-trans ref-descriptors)
-                                 (dsc:descriptor-means     ref-descriptors)
-                                 (dsc:descriptor-pca-descr src-descriptors)
-                                 (dsc:descriptor-pca-trans src-descriptors)
-                                 (dsc:descriptor-means     src-descriptors)))
-             ;; Find matches between descriptors
-             (ref-kp (dsc:descriptor-coords ref-descriptors))
-             (src-kp (dsc:descriptor-coords src-descriptors))
-             (matches (match:match-descriptors
-                       (add-offsets! rx ry rz ref-kp)
-                       (add-offsets! sx sy sz src-kp)
-                       ref-desc src-desc dist-ratio)))
+        (serapeum:mvlet* ((ref-descriptors
+                           (log-eval "Got descriptors of the reference image"
+                                     #'db:descriptors-cached reference
+                                     db-pathname #'dsc:calculate-descriptor))
+                          (src-descriptors
+                           (log-eval "Got descriptors of the source image"
+                                     #'dsc:calculate-descriptor source))
+                          (matches pca-dims
+                                   (dsc:calculate-matches ref-descriptors src-descriptors
+                                                          ref-offset src-offset
+                                                          dist-ratio)))
           (log:info "Found matches between images")
           ;; RANSAC is parallelized on the lisp side already
           (em:set-num-threads 1)
@@ -273,8 +243,8 @@
                                    :err         fit-error)))
             (unless fit
               (log:info "Summary: ~d/~d descriptors, ~d matches"
-                        (array-dimension src-kp 0)
-                        (array-dimension ref-kp 0)
+                        (dsc:descriptor-npoints src-descriptors)
+                        (dsc:descriptor-npoints ref-descriptors)
                         (length matches))
               (log:error "Consensus is not achieved")
               (uiop:quit 0))
@@ -296,9 +266,9 @@
                          'string
                          "Summary: ~d/~d descriptors, ~d independent parameters, "
                          "~d matches, ~d inliers, ~f fit error")
-                      (array-dimension src-kp 0)
-                      (array-dimension ref-kp 0)
-                      (array-dimension ref-desc 1)
+                      (dsc:descriptor-npoints src-descriptors)
+                      (dsc:descriptor-npoints ref-descriptors)
+                      pca-dims
                       (length matches)
                       (trans:ransac-result-inliers fit)
                       (trans:ransac-result-error   fit))))))))

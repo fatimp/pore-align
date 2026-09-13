@@ -251,6 +251,9 @@ enables uniform scaling of the coordinates."
 ;; Ransac stuff
 ;; ============
 
+(serapeum:-> random-integers (alexandria:non-negative-fixnum
+                              alexandria:positive-fixnum)
+             (values list &optional))
 (defun random-integers (k n)
   "Collect K random integer from 0 (inclusive) to N (exclusive)
 without repetitions."
