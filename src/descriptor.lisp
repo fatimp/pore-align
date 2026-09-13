@@ -5,7 +5,7 @@
                     (#:pca    #:pore-align/pca)
                     (#:pre    #:pore-align/preprocessing)
                     (#:match  #:pore-align/match))
-  (:export #:calculate-descriptor
+  (:export #:calculate-descriptors
            #:calculate-matches
            #:descriptor
            #:descriptor-coords
@@ -26,9 +26,9 @@
 (defun descriptor-npoints (descriptor)
   (array-dimension (descriptor-coords descriptor) 0))
 
-(serapeum:-> calculate-descriptor ((util:image (unsigned-byte 8)))
+(serapeum:-> calculate-descriptors ((util:image (unsigned-byte 8)))
              (values descriptor &optional))
-(defun calculate-descriptor (image)
+(defun calculate-descriptors (image)
   "Extract feature points and descriptors from an image"
   (declare (optimize (speed 3)))
   (multiple-value-bind (coords descr)

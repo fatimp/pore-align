@@ -141,7 +141,7 @@ descriptor component means."
                  (lmdb+:get db hash))))
     ;; Descriptors are in the database, return them
     (if data (decode-descriptor data)
-        (let ((descriptor (dsc:calculate-descriptor array)))
+        (let ((descriptor (dsc:calculate-descriptors array)))
           (lmdb+:with-txn (:env env :write t)
             (lmdb+:put db hash (encode-descriptor descriptor)))
           descriptor))))
@@ -187,7 +187,7 @@ descriptor component means."
                        (descriptors-cached env ref)))
                    (src-descriptors
                      (descriptors-with-logging "source"
-                       (dsc:calculate-descriptor src)))
+                       (descriptors-cached env src)))
                    (matches (dsc:calculate-matches
                              ref-descriptors src-descriptors
                              ref-offset src-offset dist-ratio)))
