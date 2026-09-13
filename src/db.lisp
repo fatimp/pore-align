@@ -72,9 +72,9 @@
 
 ;; TODO: Update documentation
 (serapeum:-> descriptors-cached
-             ((util:image (unsigned-byte 8)) pathname dsc:descriptor-fn)
+             (lmdb:env (util:image (unsigned-byte 8)) dsc:descriptor-fn)
              (values dsc:descriptor &optional))
-(defun descriptors-cached (array db-pathname descriptor-fn)
+(defun descriptors-cached (env array descriptor-fn)
   "Calculate image descriptors using 3D SIFT and cache them in a
 database. The next time the descriptors are calculated for this
 particular array the results are read from the database. The database
@@ -87,17 +87,13 @@ path to the database.
 Return four values: Coordinates of keypoints, descriptors in the PCA
 space, a transform from the descriptor space to the PCA space,
 descriptor component means."
-  (let ((hash (image-hash array)))
-    (ensure-directories-exist db-pathname)
-    (lmdb+:with-env (env (uiop:native-namestring db-pathname)
-                         :if-does-not-exist :create
-                         :map-size          (* 64 (expt 2 30)))
-      (let ((db (lmdb+:get-db "descriptors" :env env)))
-        (let ((data (lmdb+:with-txn (:env env)
-                      (lmdb+:get db hash))))
-          ;; Descriptors are in the database, return them
-          (if data (decode-descriptor data)
-              (let ((descriptor (funcall descriptor-fn array)))
-                (lmdb+:with-txn (:env env :write t)
-                  (lmdb+:put db hash (encode-descriptor descriptor)))
-                descriptor)))))))
+  (let* ((hash (image-hash array))
+         (db (lmdb+:get-db "descriptors" :env env))
+         (data (lmdb+:with-txn (:env env)
+                 (lmdb+:get db hash))))
+    ;; Descriptors are in the database, return them
+    (if data (decode-descriptor data)
+        (let ((descriptor (funcall descriptor-fn array)))
+          (lmdb+:with-txn (:env env :write t)
+            (lmdb+:put db hash (encode-descriptor descriptor)))
+          descriptor))))
