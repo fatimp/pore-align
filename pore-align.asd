@@ -21,7 +21,7 @@
                :vector-sum
                :lparallel
                :fast-io
-               :cl-store
+               :cl-conspack
                :cl-libtiff
                (:feature :freebsd :freebsd-sysctl)
                :pore-align/util

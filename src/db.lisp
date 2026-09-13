@@ -1,6 +1,8 @@
 (defpackage pore-align/db
   (:use #:cl)
   (:local-nicknames (#:util #:pore-align/util)
+                    ;; FIXME: for %assoc
+                    (#:cmd  #:command-line-parse)
                     (#:dsc  #:pore-align/descriptor))
   (:export #:descriptors-cached))
 (in-package :pore-align/db)
@@ -22,13 +24,34 @@
      digest (sb-ext:array-storage-vector array))
     (ironclad:produce-digest digest)))
 
+(defmethod conspack:encode-object append
+    ((descriptor dsc:descriptor) &key &allow-other-keys)
+  (list
+   (cons :coords    (dsc:descriptor-coords    descriptor))
+   (cons :pca-descr (dsc:descriptor-pca-descr descriptor))
+   (cons :pca-trans (dsc:descriptor-pca-trans descriptor))
+   (cons :means     (dsc:descriptor-means     descriptor))))
+
+(defmethod conspack:decode-object-allocate
+    ((class (eql 'dsc:descriptor)) alist &key &allow-other-keys)
+  (dsc:descriptor
+   (cmd:%assoc :coords    alist)
+   (cmd:%assoc :pca-descr alist)
+   (cmd:%assoc :pca-trans alist)
+   (cmd:%assoc :means     alist)))
+
+(defmethod conspack:decode-object-initialize progn
+    ((object dsc:descriptor) class alist &key &allow-other-keys)
+  (declare (ignore class alist))
+  object)
+
 (serapeum:-> encode-object (t)
              (values (simple-array (unsigned-byte 8) (*)) &optional))
 (declaim (inline encode-object))
 (defun encode-object (object)
-  (let ((stream (make-instance 'fast-io:fast-output-stream)))
-    (cl-store:store object stream)
-    (fast-io:finish-output-stream stream)))
+  (let ((stream (fast-io:make-output-buffer)))
+    (conspack:encode-to-buffer object stream)
+    (fast-io:finish-output-buffer stream)))
 
 (serapeum:-> encode-descriptor (dsc:descriptor)
              (values (simple-array (unsigned-byte 8) (*)) &optional))
@@ -39,8 +62,8 @@
              (values t &optional))
 (declaim (inline decode-object))
 (defun decode-object (octets)
-  (let ((stream (make-instance 'fast-io::fast-input-stream :vector octets)))
-    (cl-store:restore stream)))
+  (let ((stream (fast-io:make-input-buffer :vector octets)))
+    (conspack:decode-value stream)))
 
 (serapeum:-> decode-descriptor ((simple-array (unsigned-byte 8) (*)))
              (values dsc:descriptor &optional))

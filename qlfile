@@ -20,4 +20,4 @@ github shamazmazum/cl-libtiff :tag v0.1
 github shamazmazum/numpy-npy :tag v0.4
 github shamazmazum/lmdb :tag v1.0
 ql fast-io
-ql cl-store
+ql cl-conspack
