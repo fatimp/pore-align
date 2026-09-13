@@ -247,8 +247,7 @@
                                         #'db:descriptors-cached reference
                                         db-pathname #'dsc:calculate-descriptor))
              (src-descriptors (log-eval "Got descriptors of the source image"
-                                        #'db:descriptors-cached source
-                                        db-pathname #'dsc:calculate-descriptor))
+                                        #'dsc:calculate-descriptor source))
              ;; Convert descriptors in one PCA space
              (ref-desc src-desc (pca:restore-descriptors
                                  (dsc:descriptor-pca-descr ref-descriptors)
