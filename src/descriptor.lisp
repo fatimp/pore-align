@@ -16,6 +16,8 @@
 (in-package :pore-align/descriptor)
 
 (serapeum:defconstructor descriptor
+  "A structure which represents coordinates of feature points and
+image descriptors in PCA space"
   (coords    (util:fixed-entries #.util:+descriptor-offset+))
   (pca-descr (util:fixed-entries *))
   (pca-trans (util:fixed-entries #.util:+descriptor-length+))
@@ -24,12 +26,18 @@
 (serapeum:-> descriptor-npoints (descriptor)
              (values alexandria:array-index &optional))
 (defun descriptor-npoints (descriptor)
+  "Return the number of feature points or descriptors."
   (array-dimension (descriptor-coords descriptor) 0))
 
 (serapeum:-> calculate-descriptors ((util:image (unsigned-byte 8)))
              (values descriptor &optional))
 (defun calculate-descriptors (image)
-  "Extract feature points and descriptors from an image"
+  "Extract feature points and descriptors from an image. This function
+accepts a 8-bit grayscale image, preprocesses it with CLAHE and runs
+PCA analysis on descriptors.
+
+Unlike the function in @c(PORE-ALIGN/SIFT) package this function
+handles preprocessing and PCA analysis for you."
   (declare (optimize (speed 3)))
   (multiple-value-bind (coords descr)
       (sift3d:descriptors (pre:clahe image))
@@ -55,19 +63,18 @@
       (incf (aref keypoints i 2) z)))
   (values))
 
-(deftype matches-fn ()
-  '(function (descriptor descriptor
-              (or util:image-offset null)
-              (or util:image-offset null)
-              (single-float 1.0))
-    (values list alexandria:array-index &optional)))
-
 (serapeum:-> calculate-matches (descriptor descriptor
                                 (or util:image-offset null)
                                 (or util:image-offset null)
                                 (single-float 1.0))
              (values list &optional))
 (defun calculate-matches (ref-descriptors src-descriptors ref-offset src-offset dist-ratio)
+  "Calculate matches between two descriptor sets, possibly adding
+offsets to feature point coordinates.
+
+This is a high-level wrapper around
+@c(PORE-ALIGN/MATCH:MATCH-DESCRIPTORS) which reconstruction from the
+PCA space for you."
   (declare (optimize (speed 3)))
   (multiple-value-bind (ref-desc src-desc)
       (pca:restore-descriptors

@@ -124,6 +124,7 @@
           v)))))
 
 (serapeum:defconstructor image-offset
+  "Structure which represents an offset into the working space."
   (x (unsigned-byte 32))
   (y (unsigned-byte 32))
   (z (unsigned-byte 32)))

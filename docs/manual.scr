@@ -236,6 +236,11 @@ Description of flags and options
 
 @begin(section)
   @title(API)
+  Package @c(pore-align/util):
+  @cl:with-package[name="pore-align/util"](
+    @cl:doc(defconstructor image-offset)
+  )
+
   Package @c(pore-align/preprocessing):
   @cl:with-package[name="pore-align/preprocessing"](
     @cl:doc(function clahe)
@@ -253,14 +258,22 @@ Description of flags and options
     @cl:doc(function invert-pca)
   )
 
-  Package @c(pore-align/db):
-  @cl:with-package[name="pore-align/db"](
-    @cl:doc(function descriptors-cached)
-  )
-
   Package @c(pore-align/match):
   @cl:with-package[name="pore-align/match"](
     @cl:doc(function match-descriptors)
+  )
+
+  Package @c(pore-align/descriptor):
+  @cl:with-package[name="pore-align/descriptor"](
+    @cl:doc(defconstructor descriptor)
+    @cl:doc(function calculate-descriptors)
+    @cl:doc(function calculate-matches)
+  )
+
+  Package @c(pore-align/db):
+  @cl:with-package[name="pore-align/db"](
+    @cl:doc(function descriptors-cached)
+    @cl:doc(function matches-cached)
   )
 
   Package @c(pore-align/transform):

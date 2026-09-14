@@ -116,25 +116,9 @@
 (defun decode-matches (octets)
   (decode-object octets))
 
-;; TODO: Update documentation
-;; FIXME: This function takes %env while matches-cached takes DB pathname.
-;;        This is weird.
-(serapeum:-> descriptors-cached
-             (lmdb:env (util:image (unsigned-byte 8)))
+(serapeum:-> %descriptors-cached (lmdb:env (util:image (unsigned-byte 8)))
              (values dsc:descriptor &optional))
-(defun descriptors-cached (env array)
-  "Calculate image descriptors using 3D SIFT and cache them in a
-database. The next time the descriptors are calculated for this
-particular array the results are read from the database. The database
-uses SHA256 hash of the array as a key into the database. Unlike
-@c(SOIL-ALIGN/SIFT3D:DESCRIPTORS) function, this function accepts an
-(original) array of octets which is later converted to an array of
-single floats using CLAHE algorithm. @c(DB-PATHNAME) argument is a
-path to the database.
-
-Return four values: Coordinates of keypoints, descriptors in the PCA
-space, a transform from the descriptor space to the PCA space,
-descriptor component means."
+(defun %descriptors-cached (env array)
   (let* ((hash (image-hash array))
          (db (lmdb+:get-db "descriptors" :env env))
          (data (lmdb+:with-txn (:env env)
@@ -145,6 +129,25 @@ descriptor component means."
           (lmdb+:with-txn (:env env :write t)
             (lmdb+:put db hash (encode-descriptor descriptor)))
           descriptor))))
+
+;; High-level function
+(serapeum:-> descriptors-cached ((or pathname string)
+                                 (util:image (unsigned-byte 8)))
+             (values dsc:descriptor &optional))
+(defun descriptors-cached (db-pathname array)
+  "Calculate image descriptors using 3D SIFT and cache them in a
+database. The next time the descriptors are calculated for this
+particular array the results are read from the database. The database
+uses SHA256 hash of the array as a key into the
+database. @c(DB-PATHNAME) argument is a path to the database. This
+function is a cached version of @c(CALCULATE-DESCRIPTORS).
+
+Return @c(DESCRIPTOR) structure."
+  (lmdb+:with-env (env (uiop:native-namestring db-pathname)
+                       :if-does-not-exist :create
+                       :max-dbs           2
+                       :map-size          (* 64 (expt 2 30)))
+    (%descriptors-cached env array)))
 
 (serapeum:-> %descriptors-with-logging ((function () (values dsc:descriptor &optional))
                                         string)
@@ -162,7 +165,6 @@ descriptor component means."
       ,@body)
     ,which))
 
-;; TODO: Write documentation
 (serapeum:-> matches-cached ((or string pathname)
                              (util:image (unsigned-byte 8))
                              (util:image (unsigned-byte 8))
@@ -171,6 +173,17 @@ descriptor component means."
                              (single-float 1.0))
              (values list &optional))
 (defun matches-cached (db-pathname ref src ref-offset src-offset dist-ratio)
+  "Find matched between descriptors and cache the result in the
+database, so the next time the matches are needed the DB entry is
+returned instead of running the full search.
+
+Image offsets (when working with subregions) and the distance ratio is
+encoded in the key as well.
+
+When there are no matches in the database for this combination of
+arguments, the required descriptors are also cached in the DB.
+
+This is a caching version of @c(CALCULATE-MATCHES)."
   (let* ((ref-hash (image-hash ref))
          (src-hash (image-hash src))
          (hash     (matches-hash ref-hash src-hash ref-offset src-offset dist-ratio)))
@@ -184,10 +197,10 @@ descriptor component means."
         (if data (decode-matches data)
             (let* ((ref-descriptors
                      (descriptors-with-logging "reference"
-                       (descriptors-cached env ref)))
+                       (%descriptors-cached env ref)))
                    (src-descriptors
                      (descriptors-with-logging "source"
-                       (descriptors-cached env src)))
+                       (%descriptors-cached env src)))
                    (matches (dsc:calculate-matches
                              ref-descriptors src-descriptors
                              ref-offset src-offset dist-ratio)))
