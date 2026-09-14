@@ -272,6 +272,7 @@ Description of flags and options
 
   Package @c(pore-align/db):
   @cl:with-package[name="pore-align/db"](
+    @cl:doc(defconstructor descriptor-caching-policy)
     @cl:doc(function descriptors-cached)
     @cl:doc(function matches-cached)
   )

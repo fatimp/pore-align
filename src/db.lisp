@@ -5,7 +5,8 @@
                     (#:cmd  #:command-line-parse)
                     (#:dsc  #:pore-align/descriptor))
   (:export #:descriptors-cached
-           #:matches-cached))
+           #:matches-cached
+           #:descriptor-caching-policy))
 (in-package :pore-align/db)
 
 (serapeum:-> matches-hash ((simple-array (unsigned-byte 8) (32))
@@ -165,14 +166,25 @@ Return @c(DESCRIPTOR) structure."
       ,@body)
     ,which))
 
+(serapeum:defconstructor descriptor-caching-policy
+  "Structure which defines descriptor caching behaviour for
+@c(MATCHES-CACHED)."
+  (cache-reference-p boolean)
+  (cache-source-p    boolean))
+
+(defparameter *default-caching-policy*
+  (descriptor-caching-policy t t))
+
 (serapeum:-> matches-cached ((or string pathname)
                              (util:image (unsigned-byte 8))
                              (util:image (unsigned-byte 8))
                              (or util:image-offset null)
                              (or util:image-offset null)
-                             (single-float 1.0))
+                             (single-float 1.0)
+                             &optional descriptor-caching-policy)
              (values list &optional))
-(defun matches-cached (db-pathname ref src ref-offset src-offset dist-ratio)
+(defun matches-cached (db-pathname ref src ref-offset src-offset dist-ratio
+                       &optional (policy *default-caching-policy*))
   "Find matched between descriptors and cache the result in the
 database, so the next time the matches are needed the DB entry is
 returned instead of running the full search.
@@ -181,7 +193,8 @@ Image offsets (when working with subregions) and the distance ratio is
 encoded in the key as well.
 
 When there are no matches in the database for this combination of
-arguments, the required descriptors are also cached in the DB.
+arguments, @c(POLICY) controls if the DB is used to cache descriptors
+of the images.
 
 This is a caching version of @c(CALCULATE-MATCHES)."
   (let* ((ref-hash (image-hash ref))
@@ -197,10 +210,14 @@ This is a caching version of @c(CALCULATE-MATCHES)."
         (if data (decode-matches data)
             (let* ((ref-descriptors
                      (descriptors-with-logging "reference"
-                       (%descriptors-cached env ref)))
+                       (if (descriptor-caching-policy-cache-reference-p policy)
+                           (%descriptors-cached   env ref)
+                           (dsc:calculate-descriptors ref))))
                    (src-descriptors
                      (descriptors-with-logging "source"
-                       (%descriptors-cached env src)))
+                       (if (descriptor-caching-policy-cache-source-p policy)
+                           (%descriptors-cached   env src)
+                           (dsc:calculate-descriptors src))))
                    (matches (dsc:calculate-matches
                              ref-descriptors src-descriptors
                              ref-offset src-offset dist-ratio)))
