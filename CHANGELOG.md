@@ -1,5 +1,15 @@
 # Changelog
 
+## Version 1.0.0
+
+* Incompatible change: New DB format. No migration is supported, you have to
+  remove an old DB (`~/.local/share/pore-align`). Now descriptor matches are
+  also stored in the DB.
+* Improvement: A new option `--cache-only-ref` which disables caching of source image
+  descriptors.
+* Improvement: RMSD is reported as a fit error.
+* Improvement: More sane defaults.
+
 ## Version 0.11.2
 
 * Fix CI script for building Ubuntu package
