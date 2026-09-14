@@ -73,12 +73,13 @@
    arguments the following short help appears:
 @begin(code)
 % pore-align
-Abrupt ending of the input: argument #<ARGUMENT {11004A35A3}> missing
-Usage: pore-align [-v|--verbose] [-t|--threads N] [--src-workspace-side SIDE]
-                  [--ref-workspace-side SIDE] [-p|--seed-points N]
-                  [-w|--workspace-side SIDE] [-O|--transform-output m.npy]
-                  [-o|--output out.npy] [--rotation-constraint AXIS]
-                  [-s|--scaling] [-b|--background-color COLOR] [--dist-ratio C]
+Abrupt ending of the input: argument #<ARGUMENT {110043F693}> missing
+Usage: pore-align [-v|--verbose] [--cache-only-ref] [-t|--threads N]
+                  [--src-workspace-side SIDE] [--ref-workspace-side SIDE]
+                  [-p|--seed-points N] [-w|--workspace-side SIDE]
+                  [-O|--transform-output m.npy] [-o|--output out.npy]
+                  [--rotation-constraint AXIS] [-s|--scaling]
+                  [-b|--background-color COLOR] [--dist-ratio C]
                   [--fit-error E] [--ransac-iterations M]
                   reference source
 
@@ -96,6 +97,7 @@ Description of flags and options
 --ref-workspace-side SIDE       Side of a workspace which is cut from center of the reference image. Has a precedence over -w option.
 --src-workspace-side SIDE       Side of a workspace which is cut from center of the source image. Has a precedence over -w option.
 -t|--threads N                  Number of threads to use (Default: 4)
+--cache-only-ref                Do not cache descriptors of the source image.
 -v|--verbose                    Be verbose
 @end(code)
 
@@ -111,6 +113,8 @@ Description of flags and options
    Here we discuss not-so-important options:
    @begin(list)
      @item(@c(-v) — Be more verbose)
+     @item(@c(--cache-only-ref) — Do not cache descriptors of source images
+   (which are typically used only once per dataset) thus saving disk space.)
      @item(@c(-t) — Number of threads. Used when computing image feature points
    and matching descriptors. On FreeBSD platform the default is a half of
    available cores, but no more than 10. On other platforms the default is 1.)
@@ -135,6 +139,8 @@ Description of flags and options
    descriptors. Two points \(p_{ref}\) and \(p_{src}\) match if \(d
    \rho(p_{ref}, p_{src}) < \rho(p_{ref}, p'_{src})\). Here \(p'_{src}\) is the
    second-nearest feature point and \(d\) is the distance ratio.)
+     @item(@c(--seed-points) — An initial number of randomly chosen points to
+   fit a model. Used in the RANSAC algorithm.)
      @item(@c(--fit-error) — A parameter used in the RANSAC algorithm to
    determine if a model fits a point.)
      @item(@c(-p) — A number of seed points for RANSAC to make an initial
@@ -156,54 +162,28 @@ Description of flags and options
    A typical output of pore-align when being run with @c(-v) option is the
    following:
 @begin(code)
- <INFO> [15:01:00] pore-align/cli cli.lisp (top level form %main) - Starting
- <INFO> [15:01:00] pore-align/cli cli.lisp (top level form %main) -
+ <INFO> [06:17:32] pore-align/cli cli.lisp (top level form %main) - Starting
+ <INFO> [06:17:32] pore-align/cli cli.lisp (top level form %main) -
   Will use 6 threads
- <INFO> [15:17:13] pore-align/cli cli.lisp (top level form %main log-eval) -
-  SOIL-ALIGN/CLI::MESSAGE: "Got descriptors of the source image"
- <INFO> [15:34:03] pore-align/cli cli.lisp (top level form %main log-eval) -
-  SOIL-ALIGN/CLI::MESSAGE: "Got descriptors of the reference image"
- <INFO> [15:36:00] pore-align/cli cli.lisp (top level form %main) -
-  Found matches between images
- <INFO> [15:36:00] pore-align/cli cli.lisp (top level form %main) -
-  Found a transform matrix
- <INFO> [15:36:12] pore-align/cli cli.lisp (top level form %main log-eval) -
-  SOIL-ALIGN/CLI::MESSAGE: "Computed a transformed image"
- <INFO> [15:36:12] pore-align/cli cli.lisp (top level form %main) -
-  Summary: 281390/300000 descriptors, 379 independent parameters, 996 matches, 842 inliers, 805.0559 fit error
+ <INFO> [06:21:31] pore-align/db db.lisp (top level form %descriptors-with-logging) -
+  Got 75200 descriptors of the reference image
+ <INFO> [06:25:17] pore-align/db db.lisp (top level form %descriptors-with-logging) -
+  Got 72174 descriptors of the source image
+ <INFO> [06:25:25] pore-align/cli cli.lisp (top level form %main) -
+  Found 31574 matches between images
+ <INFO> [06:27:03] pore-align/cli cli.lisp (top level form %main) -
+  Found transform matrix: 30551 inliers, 2.0658422 fit error
 @end(code)
 
-   As you can see it took 35 minutes to process a pair of images. In this
-   example a workspace size of 800 were used. Each image contains about 300000
-   feature points but there are only 996 matches between images. This is because
-   there was a process of drying between the images which changed the structure
-   of the porous medium. Nevertheless pore-align was able to register the
-   images. It constructed a transform which fitted 842 descriptors with total
-   error of 805 (the error is computed as \(\sqrt{\sum_i |T(x_i) - y_i|^2}\))
-   where \(x_i\) is a coordinate of a feature point on the source image, \(y_i\)
-   is a coordinate of a feature point on the reference image and \(T\) is a
-   transform between source and reference coordinate systems.
+   As you can see it took 10 minutes to process a pair of images. In this
+   example a workspace size of 500 were used. Each image contains about 75000
+   feature points but there are only 31574 (typically less, these two images
+   differ from each other only by some translation and rotation) matches between
+   images. Pore-align was able to register the images. It constructed a
+   transform which fitted 30551 descriptors with RMSD of 2.07.
 
    If you run pore-align again with the same reference image, the execution time
-   is reduced to 17 minutes due to use of LMDB.
-@begin(code)
- <INFO> [15:59:34] pore-align/cli cli.lisp (top level form %main) - Starting
- <INFO> [15:59:34] pore-align/cli cli.lisp (top level form %main) -
-  Will use 6 threads
- <INFO> [16:15:09] pore-align/cli cli.lisp (top level form %main log-eval) -
-  SOIL-ALIGN/CLI::MESSAGE: "Got descriptors of the source image"
- <INFO> [16:15:16] pore-align/cli cli.lisp (top level form %main log-eval) -
-  SOIL-ALIGN/CLI::MESSAGE: "Got descriptors of the reference image"
- <INFO> [16:17:00] pore-align/cli cli.lisp (top level form %main) -
-  Found matches between images
- <INFO> [16:17:02] pore-align/cli cli.lisp (top level form %main) -
-  Found a transform matrix
- <INFO> [16:17:13] pore-align/cli cli.lisp (top level form %main log-eval) -
-  SOIL-ALIGN/CLI::MESSAGE: "Computed a transformed image"
- <INFO> [16:17:14] pore-align/cli cli.lisp (top level form %main) -
-  Summary: 251890/300000 descriptors, 379 independent parameters, 2025 matches,
- 1868 inliers, 1068.2292 fit error
-@end(code)
+   is reduced due to use of LMDB.
    @end(section)
 
    @begin(section)
