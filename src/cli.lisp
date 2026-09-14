@@ -83,6 +83,14 @@
   #-freebsd
   (default-number-of-threads-fallback signal-warn-p))
 
+(alexandria:define-constant +cache-only-ref+
+    (db:descriptor-caching-policy t nil)
+  :test #'equalp)
+
+(alexandria:define-constant +cache-all+
+    (db:descriptor-caching-policy t t)
+  :test #'equalp)
+
 (defparameter *parser*
   (seq
    (optional
@@ -90,6 +98,9 @@
             :short       #\v
             :long        "verbose"
             :description "Be verbose")
+    (flag   :cache-only-ref
+            :long        "cache-only-ref"
+            :description "Do not cache descriptors of the source image.")
     (option :nthreads    "N"
             :long        "threads"
             :short       #\t
@@ -196,6 +207,7 @@
          (ransac-iter       (%assoc :ransac-iter      args *ransac-iter-default*))
          (seed-points       (%assoc :seed-points      args *seed-points-default*))
          (background        (%assoc :background       args *background-default*))
+         (cache-only-ref-p  (%assoc :cache-only-ref   args))
          (nthreads          (%assoc :nthreads         args))
          (nthreads          (or nthreads (default-number-of-threads t)))
          (db-pathname       (get-db-pathname)))
@@ -218,7 +230,10 @@
         (setq lparallel:*kernel* (lparallel:make-kernel nthreads))
         (ensure-directories-exist db-pathname)
         (let ((matches (db:matches-cached
-                        db-pathname reference source ref-offset src-offset dist-ratio)))
+                        db-pathname reference source ref-offset src-offset dist-ratio
+                        (if cache-only-ref-p
+                            +cache-only-ref+
+                            +cache-all+))))
           (log:info "Found ~d matches between images" (length matches))
           ;; RANSAC is parallelized on the lisp side already
           (em:set-num-threads 1)
