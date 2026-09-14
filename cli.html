@@ -54,8 +54,10 @@
    pore-align application has a command line interface. If you launch it without
    arguments the following short help appears:
 </p><pre><code class=NIL>% pore-align
-Abrupt ending of the input: argument #&lt;ARGUMENT {11004A6423}&gt; missing
-Usage: pore-align [-v|--verbose] [-t|--threads N] [-w|--workspace-side S]
+Abrupt ending of the input: argument #&lt;ARGUMENT {110043F693}&gt; missing
+Usage: pore-align [-v|--verbose] [--cache-only-ref] [-t|--threads N]
+                  [--src-workspace-side SIDE] [--ref-workspace-side SIDE]
+                  [-p|--seed-points N] [-w|--workspace-side SIDE]
                   [-O|--transform-output m.npy] [-o|--output out.npy]
                   [--rotation-constraint AXIS] [-s|--scaling]
                   [-b|--background-color COLOR] [--dist-ratio C]
@@ -63,16 +65,20 @@ Usage: pore-align [-v|--verbose] [-t|--threads N] [-w|--workspace-side S]
                   reference source
 
 Description of flags and options
---ransac-iterations M           Number of RANSAC iterations
---fit-error E                   The maximal allowed fit error to treat a sample as inlier
---dist-ratio C                  Controls what we consider a match
--b|--background-color COLOR     Background color
+--ransac-iterations M           Number of RANSAC iterations (Default: 20000)
+--fit-error E                   The maximal allowed fit error to treat a sample as inlier (Default: 20.0)
+--dist-ratio C                  Minimal distance ratio between the closest and the second to closest neighbors (Default: 1.1)
+-b|--background-color COLOR     Background color (Default: 0)
 -s|--scaling                    Add uniform scaling to the model
 --rotation-constraint AXIS      Constrain rotation to be around only one axis (0, 1 or 2)
 -o|--output out.npy             Output file name for a transformed image (.npy or .raw)
 -O|--transform-output m.npy     Output file name for a transform matrix (.npy)
--w|--workspace-side S           Side of a workspace which is cut from center of the input images
--t|--threads N                  Number of threads to use
+-w|--workspace-side SIDE        Side of a workspace which is cut from center of the input images
+-p|--seed-points N              Number of seed points for RANSAC (Default: 15)
+--ref-workspace-side SIDE       Side of a workspace which is cut from center of the reference image. Has a precedence over -w option.
+--src-workspace-side SIDE       Side of a workspace which is cut from center of the source image. Has a precedence over -w option.
+-t|--threads N                  Number of threads to use (Default: 4)
+--cache-only-ref                Do not cache descriptors of the source image.
 -v|--verbose                    Be verbose
 </code></pre><p>   Two mandatory arguments <code>reference</code> and <code>source</code> are two input
    images. pore-align will try to bring a source image into a reference'
@@ -82,7 +88,8 @@ Description of flags and options
    an augmented coordinate vector \((x, y, z, 1)^T\) in the reference'
    coordinate system produces a coordinate vector \((x', y', z', 1)^T\) in the
    source' coordinate system.</p><p>   Here we discuss not-so-important options:
-   </p><ul><li><code>-v</code> — Be more verbose</li><li><code>-t</code> — Number of threads. Used when computing image feature points
+   </p><ul><li><code>-v</code> — Be more verbose</li><li><code>--cache-only-ref</code> — Do not cache descriptors of source images
+   (which are typically used only once per dataset) thus saving disk space.</li><li><code>-t</code> — Number of threads. Used when computing image feature points
    and matching descriptors. On FreeBSD platform the default is a half of
    available cores, but no more than 10. On other platforms the default is 1.</li><li><code>-w</code> — Used to crop a big input image. When not specified the whole
    image is used to compute feature points. When specified, a window of this
@@ -100,10 +107,11 @@ Description of flags and options
    neighbors according to Euclidean distance between corresponding
    descriptors. Two points \(p_{ref}\) and \(p_{src}\) match if \(d
    \rho(p_{ref}, p_{src}) &lt; \rho(p_{ref}, p'_{src})\). Here \(p'_{src}\) is the
-   second-nearest feature point and \(d\) is the distance ratio. The default
-   value is 1.2</li><li><code>--fit-error</code> — A parameter used in the RANSAC algorithm to
-   determine if a model fits a point. The default value is 100.0</li><li><code>--ransac-iterations</code> — A number of RANSAC iterations to find a
-   model which fits the feature points. The default value is 5000.</li></ul><p>   pore-align utilises LMDB to store image descriptors. The DB is written at
+   second-nearest feature point and \(d\) is the distance ratio.</li><li><code>--seed-points</code> — An initial number of randomly chosen points to
+   fit a model. Used in the RANSAC algorithm.</li><li><code>--fit-error</code> — A parameter used in the RANSAC algorithm to
+   determine if a model fits a point.</li><li><code>-p</code> — A number of seed points for RANSAC to make an initial
+   fit.</li><li><code>--ransac-iterations</code> — A number of RANSAC iterations to find a
+   model which fits the feature points.</li></ul><p>   pore-align utilises LMDB to store image descriptors. The DB is written at
    <code>~/.local/share/pore-align/</code> by default, but the path can be overwritten
    with <code>SOIL_ALIGN_DB</code> environment variable. The DB accelerates registration
    within the same dataset. After working with the dataset it's recommended to
@@ -112,49 +120,24 @@ Description of flags and options
    </p><p>   </p><h1 id="output-explained">Output explained</h1><p>
    A typical output of pore-align when being run with <code>-v</code> option is the
    following:
-</p><pre><code class=NIL> &lt;INFO&gt; [15:01:00] pore-align/cli cli.lisp (top level form %main) - Starting
- &lt;INFO&gt; [15:01:00] pore-align/cli cli.lisp (top level form %main) -
+</p><pre><code class=NIL> &lt;INFO&gt; [06:17:32] pore-align/cli cli.lisp (top level form %main) - Starting
+ &lt;INFO&gt; [06:17:32] pore-align/cli cli.lisp (top level form %main) -
   Will use 6 threads
- &lt;INFO&gt; [15:17:13] pore-align/cli cli.lisp (top level form %main log-eval) -
-  SOIL-ALIGN/CLI::MESSAGE: &quot;Got descriptors of the source image&quot;
- &lt;INFO&gt; [15:34:03] pore-align/cli cli.lisp (top level form %main log-eval) -
-  SOIL-ALIGN/CLI::MESSAGE: &quot;Got descriptors of the reference image&quot;
- &lt;INFO&gt; [15:36:00] pore-align/cli cli.lisp (top level form %main) -
-  Found matches between images
- &lt;INFO&gt; [15:36:00] pore-align/cli cli.lisp (top level form %main) -
-  Found a transform matrix
- &lt;INFO&gt; [15:36:12] pore-align/cli cli.lisp (top level form %main log-eval) -
-  SOIL-ALIGN/CLI::MESSAGE: &quot;Computed a transformed image&quot;
- &lt;INFO&gt; [15:36:12] pore-align/cli cli.lisp (top level form %main) -
-  Summary: 281390/300000 descriptors, 379 independent parameters, 996 matches, 842 inliers, 805.0559 fit error
-</code></pre><p>   As you can see it took 35 minutes to process a pair of images. In this
-   example a workspace size of 800 were used. Each image contains about 300000
-   feature points but there are only 996 matches between images. This is because
-   there was a process of drying between the images which changed the structure
-   of the porous medium. Nevertheless pore-align was able to register the
-   images. It constructed a transform which fitted 842 descriptors with total
-   error of 805 (the error is computed as \(\sqrt{\sum_i |T(x_i) - y_i|^2}\))
-   where \(x_i\) is a coordinate of a feature point on the source image, \(y_i\)
-   is a coordinate of a feature point on the reference image and \(T\) is a
-   transform between source and reference coordinate systems.</p><p>   If you run pore-align again with the same reference image, the execution time
-   is reduced to 17 minutes due to use of LMDB.
-</p><pre><code class=NIL> &lt;INFO&gt; [15:59:34] pore-align/cli cli.lisp (top level form %main) - Starting
- &lt;INFO&gt; [15:59:34] pore-align/cli cli.lisp (top level form %main) -
-  Will use 6 threads
- &lt;INFO&gt; [16:15:09] pore-align/cli cli.lisp (top level form %main log-eval) -
-  SOIL-ALIGN/CLI::MESSAGE: &quot;Got descriptors of the source image&quot;
- &lt;INFO&gt; [16:15:16] pore-align/cli cli.lisp (top level form %main log-eval) -
-  SOIL-ALIGN/CLI::MESSAGE: &quot;Got descriptors of the reference image&quot;
- &lt;INFO&gt; [16:17:00] pore-align/cli cli.lisp (top level form %main) -
-  Found matches between images
- &lt;INFO&gt; [16:17:02] pore-align/cli cli.lisp (top level form %main) -
-  Found a transform matrix
- &lt;INFO&gt; [16:17:13] pore-align/cli cli.lisp (top level form %main log-eval) -
-  SOIL-ALIGN/CLI::MESSAGE: &quot;Computed a transformed image&quot;
- &lt;INFO&gt; [16:17:14] pore-align/cli cli.lisp (top level form %main) -
-  Summary: 251890/300000 descriptors, 379 independent parameters, 2025 matches,
- 1868 inliers, 1068.2292 fit error
-</code></pre><p>
+ &lt;INFO&gt; [06:21:31] pore-align/db db.lisp (top level form %descriptors-with-logging) -
+  Got 75200 descriptors of the reference image
+ &lt;INFO&gt; [06:25:17] pore-align/db db.lisp (top level form %descriptors-with-logging) -
+  Got 72174 descriptors of the source image
+ &lt;INFO&gt; [06:25:25] pore-align/cli cli.lisp (top level form %main) -
+  Found 31574 matches between images
+ &lt;INFO&gt; [06:27:03] pore-align/cli cli.lisp (top level form %main) -
+  Found transform matrix: 30551 inliers, 2.0658422 fit error
+</code></pre><p>   As you can see it took 10 minutes to process a pair of images. In this
+   example a workspace size of 500 were used. Each image contains about 75000
+   feature points but there are only 31574 (typically less, these two images
+   differ from each other only by some translation and rotation) matches between
+   images. Pore-align was able to register the images. It constructed a
+   transform which fitted 30551 descriptors with RMSD of 2.07.</p><p>   If you run pore-align again with the same reference image, the execution time
+   is reduced due to use of LMDB.
    </p><p>   </p><h1 id="supported-formats">Supported formats</h1><p>
    </p><ul><li>Numpy arrays (.npy files). These arrays must have rank 3 and dtype
      'uint8'. Elements of an array encode pixel intensity at the point.</li><li>Multipage TIFF images. Each image in a multipage file must have the
