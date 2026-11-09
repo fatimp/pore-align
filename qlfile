@@ -20,3 +20,4 @@ github shamazmazum/cl-libtiff :tag v0.1
 github shamazmazum/numpy-npy :tag v0.4
 github shamazmazum/lmdb :tag v1.0
 github conspack/cl-conspack
+github shamazmazum/cl-faiss :tag v0.1.1

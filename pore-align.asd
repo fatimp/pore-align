@@ -23,6 +23,7 @@
                :fast-io
                :cl-conspack
                :cl-libtiff
+               :cl-faiss
                (:feature :freebsd :freebsd-sysctl)
                :pore-align/util
                :pore-align/preprocessing
