@@ -1,6 +1,5 @@
 ql serapeum
 ql alexandria
-ql float-features
 ql cffi
 ql log4cl
 ql parse-float

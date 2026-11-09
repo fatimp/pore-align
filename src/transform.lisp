@@ -1,7 +1,6 @@
 (defpackage pore-align/transform
   (:use #:cl)
-  (:local-nicknames (#:ff   #:float-features)
-                    (#:em   #:entzauberte-matrices)
+  (:local-nicknames (#:em   #:entzauberte-matrices)
                     (#:util #:pore-align/util))
   (:export #:rigid-transform-fit
            #:ransac

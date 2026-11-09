@@ -8,7 +8,6 @@
   :class :package-inferred-system
   :depends-on (:serapeum
                :alexandria
-               :float-features
                :cffi
                :entzauberte-matrices
                :log4cl
